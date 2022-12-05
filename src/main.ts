@@ -1,30 +1,31 @@
 import Renderer from "./renderer";
+import {Vector2, Vector3} from "./math/vector";
 
 import "./style.css"
 
 
 function main() {
-  
-  const renderer: Renderer = new Renderer();
-  
+    
+    const renderer: Renderer = new Renderer();
+    
 
-  const roopAnimation = () => {
+    const roopAnimation = () => {
 
-    // poll events
+      // poll events
 
-    // update
-    renderer.update();
+      // update
+        renderer.update();
 
-    // render
-    renderer.render();
+      // render
+        renderer.render();
 
-    requestAnimationFrame(roopAnimation);
-  }
+        requestAnimationFrame(roopAnimation);
+    }
 
-  if (renderer.init())
-  {
-    requestAnimationFrame(roopAnimation);
-  }
+    if (renderer.init())
+    {
+        requestAnimationFrame(roopAnimation);
+    }
 }
 
 main();
