@@ -30,7 +30,7 @@ export default class Renderer {
     }
 
     public render(): void {
-        this.ctx.clearRect(0, 0, this.canvas.clientWidth, this.canvas.clientHeight);
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
       //this.ctx.fillRect(200,200,10,10);
       //this.ctx.fillStyle = 'rgba(255, 0, 0, 255)';
@@ -39,6 +39,8 @@ export default class Renderer {
         this.drawRectangle(140, 130, 30, 30, 'rgba(0, 255, 0, 255)');
         this.drawRectangle(170, 170, 30, 30, 'rgba(0, 0, 255, 255)');
         this.drawRectangle(200, 110, 30, 30, 'rgba(0, 0, 0, 255)');
+
+        this.drawPixel(300, 300, 'rgba(0, 0, 0, 255)');
      // console.log("render");
     }
 
@@ -55,8 +57,21 @@ export default class Renderer {
     }
 
     private drawRectangle(x: number, y: number, width: number, height: number, color: string): void {
+        if (x < 0 || y < 0 || x >= this.canvas.width || y >= this.canvas.height) {
+            throw Error("X or Y is out of range");
+        };
+
         this.ctx.fillStyle = color;
         this.ctx.fillRect(x, y, width, height);
+    }
+
+    private drawPixel(x: number, y: number, color: string) {
+        if (x < 0 || y < 0 || x >= this.canvas.width || y >= this.canvas.height) {
+            throw Error("X or Y is out of range");
+        };
+
+        this.ctx.fillStyle = color;
+        this.ctx.fillRect(x, y, 1, 1);
     }
   
   }
