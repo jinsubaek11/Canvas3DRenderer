@@ -1,8 +1,17 @@
-import { Matrix4x4 } from "./matrix"
+import { Matrix, Matrix4x4 } from "./matrix"
 
 export class Vector {
     public static convertVec3ToVec4(a: Vector3): Vector4 {
         return new Vector4(a.x, a.y, a.z, 1.0);
+    }
+
+    public static multiplyMatrix(m: Matrix4x4, v: Vector4) {
+        const x = m.data[0] * v.x + m.data[1] * v.y + m.data[2] * v.z + m.data[3] * v.w;
+        const y = m.data[4] * v.x + m.data[5] * v.y + m.data[6] * v.z + m.data[7] * v.w;
+        const z = m.data[8] * v.x + m.data[9] * v.y + m.data[10] * v.z + m.data[11] * v.w;
+        const w = m.data[12] * v.x + m.data[13] * v.y + m.data[14] * v.z + m.data[15] * v.w;
+        
+        return new Vector4(x, y, z, w);
     }
 }
 
@@ -77,12 +86,5 @@ export class Vector4 {
 
     public get w(): number {
         return this._w;
-    }
-
-    public multiplyMatrix4x4(matrix: Matrix4x4): void {
-        this._x = matrix.data[0] * this._x + matrix.data[1] * this._y + matrix.data[2] * this._z + matrix.data[3] * this._w;
-        this._y = matrix.data[4] * this._x + matrix.data[5] * this._y + matrix.data[6] * this._z + matrix.data[7] * this._w;
-        this._z = matrix.data[8] * this._x + matrix.data[9] * this._y + matrix.data[10] * this._z + matrix.data[11] * this._w;
-        this._w = matrix.data[12] * this._x + matrix.data[13] * this._y + matrix.data[14] * this._z + matrix.data[15] * this._w;
     }
 }
