@@ -105,10 +105,11 @@ export class Matrix {
     public static projection(
         fov: number, aspect: number, near: number, far: number
     ): Matrix4x4 {
-
         const matrix: Matrix4x4 = new Matrix4x4()
-        matrix.data[0] = aspect * (1 / Math.tan(fov / 2));
-        matrix.data[5] = 1 / Math.tan(fov / 2);
+        const radian = degreeToRadian(fov);
+
+        matrix.data[0] = aspect * (1 / Math.tan(radian / 2));
+        matrix.data[5] = 1 / Math.tan(radian / 2);
         matrix.data[10] = far / (far - near);
         matrix.data[11] = (-far * near) / (far - near);
         matrix.data[14] = 1.0;
@@ -116,5 +117,18 @@ export class Matrix {
         return matrix;
     }
 
+    public static multiply4x4(m1: Matrix4x4, m2: Matrix4x4): Matrix4x4 {
+        const matrix: Matrix4x4 = new Matrix4x4();
+
+        for (let i = 0; i < 4; i++) {
+            for (let j = 0; j < 4; j++) {
+                matrix.data[i * 4 + j] = 
+                m1.data[i * 4 + 0] * m2.data[0 + j] + m1.data[i * 4 + 1] * m2.data[4 + j] + 
+                m1.data[i * 4 + 2] * m2.data[8 + j] + m1.data[i * 4 + 3] * m2.data[12 + j];
+            }
+        }
+
+        return matrix;
+    }
 }
 
