@@ -16,8 +16,8 @@ export class Vector {
 }
 
 export class Vector2 {
-    private _x = 0;
-    private _y = 0;
+    private _x: number;
+    private _y: number;
 
     public constructor(x: number = 0, y: number = 0) {
         this._x = x;
@@ -36,9 +36,9 @@ export class Vector2 {
 }
 
 export class Vector3 {
-    private _x = 0;
-    private _y = 0;
-    private _z = 0;
+    private _x: number;
+    private _y: number;
+    private _z: number;
 
     public constructor(x: number = 0, y: number = 0, z: number = 0) {
         this._x = x;
@@ -60,10 +60,10 @@ export class Vector3 {
 }
 
 export class Vector4 {
-    private _x = 0;
-    private _y = 0;
-    private _z = 0;
-    private _w = 1;
+    private _x: number;
+    private _y: number;
+    private _z: number;
+    private _w: number;
 
     public constructor(x: number = 0, y: number = 0, z: number = 0, w: number = 1) {
         this._x = x;
