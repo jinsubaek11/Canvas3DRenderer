@@ -13,6 +13,33 @@ export class Vector {
         
         return new Vector4(x, y, z, w);
     }
+
+    public static rotateXvec3(v: Vector3, r: number): Vector3 {
+        const vector = new Vector3();
+        vector.x = v.x;          
+        vector.y = Math.cos(r) * v.y - Math.sin(r) * v.z;
+        vector.z = Math.sin(r) * v.y + Math.cos(r) * v.z;
+        
+        return vector;
+    }
+
+    public static rotateYvec3(v: Vector3, r: number): Vector3 {
+        const vector = new Vector3();
+        vector.x = Math.cos(r) * v.x + Math.sin(r) * v.z;
+        vector.y = v.y;          
+        vector.z = -Math.sin(r) * v.x + Math.cos(r) * v.z;
+        
+        return vector;
+    }
+
+    public static rotateZvec3(v: Vector3, r: number): Vector3 {
+        const vector = new Vector3();
+        vector.x = Math.cos(r) * v.x - Math.sin(r) * v.y;
+        vector.y = Math.sin(r) * v.x + Math.cos(r) * v.y;
+        vector.z = v.z;          
+        
+        return vector;
+    }
 }
 
 export class Vector2 {
@@ -32,7 +59,13 @@ export class Vector2 {
         return this._y;
     }
 
+    public set x(value: number) {
+        this._x = value;
+    }
 
+    public set y(value: number) {
+        this._y = value;
+    }
 }
 
 export class Vector3 {
@@ -56,6 +89,18 @@ export class Vector3 {
 
     public get z(): number {
         return this._z;
+    }
+    
+    public set x(value: number) {
+        this._x = value;
+    }
+
+    public set y(value: number) {
+        this._y = value;
+    }
+
+    public set z(value: number) {
+        this._z = value;
     }
 }
 
