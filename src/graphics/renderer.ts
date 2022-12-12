@@ -12,7 +12,7 @@ export default class Renderer {
     private projectedCube: Vector2[] = [];
     private fovFactor: number = 200;
     private triangledToRender: Triangle[] = [];
-    private camera: Vector3 = { x: 0, y: 0, z: -4 } as Vector3;
+    private camera: Vector3 = { x: 0, y: 0, z: 0 } as Vector3;
     private mesh: Mesh;
 
     public constructor() {
@@ -29,7 +29,7 @@ export default class Renderer {
                 //this.cubeMesh = loadCubeMeshData();
                 //this.cubeMesh = loadObjFileData("./assets/cube.obj");    
                 this.mesh = await loadObjFileData("./assets/cube.obj"); 
-                
+
             }
             return true;
           } else {
@@ -49,22 +49,33 @@ export default class Renderer {
             vertices[1] = this.mesh.vertices[face.b - 1];
             vertices[2] = this.mesh.vertices[face.c - 1];
 
-            let triangle: Triangle = { points: [] };
+            
+            const radian: number = deltaTime * 0.001;
+            const transformedVertices: Vector3[] = [];
 
             for (let i = 0; i < 3; i++) {
-                //deltaTime * 0.02
-                //const radian: number = degreeToRadian(deltaTime * 0.01);
-                const radian: number = deltaTime * 0.001;
-                // const originX: number = vertices[i].x;
-                // const originY: number = vertices[i].y;
-
                 let transformedVector = Vector.rotateZvec3(vertices[i], radian);
                 transformedVector = Vector.rotateYvec3(transformedVector, radian);
                 transformedVector = Vector.rotateXvec3(transformedVector, radian);
 
-                //vertices[i].x += 0.2;
-                const projectedPoint: Vector2 = this.project(transformedVector);
-                //const projectedPoint: Vector2 = this.project(vertices[i]);
+                transformedVector.z += 4;
+
+                transformedVertices.push(transformedVector);
+            }
+
+            const vectorAB: Vector3 = Vector.subtractVec3(transformedVertices[1], transformedVertices[0]);
+            const vectorAC: Vector3 = Vector.subtractVec3(transformedVertices[2], transformedVertices[0]);
+            const normal: Vector3 = Vector.crossVec3(vectorAB, vectorAC);
+            const cameraRay: Vector3 = Vector.subtractVec3(this.camera, transformedVertices[0]);
+
+            if (Vector.dotVec3(cameraRay, normal) < 0) {
+                continue;
+            }
+
+            const triangle: Triangle = { points: [] };
+
+            for (let i = 0; i < 3; i++) {
+                const projectedPoint: Vector2 = this.project(transformedVertices[i]);
                 projectedPoint.x += this.canvas.width / 2;
                 projectedPoint.y += this.canvas.height / 2;
 
@@ -79,17 +90,18 @@ export default class Renderer {
     }
 
     public render(deltaTime: number): void {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillStyle = "black";
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-        for (let i = 0; i < this.mesh.faces.length; i++) {
+        for (let i = 0; i < this.triangledToRender.length; i++) {
             const triangle: Triangle = this.triangledToRender[i];
-            this.drawRectangle(triangle.points[0].x, triangle.points[0].y, 3, 3 , 'red');
-            this.drawRectangle(triangle.points[1].x, triangle.points[1].y, 3, 3 , 'red');
-            this.drawRectangle(triangle.points[2].x, triangle.points[2].y, 3, 3 , 'red');
+            this.drawRectangle(triangle.points[0].x, triangle.points[0].y, 3, 3 , "red");
+            this.drawRectangle(triangle.points[1].x, triangle.points[1].y, 3, 3 , "red");
+            this.drawRectangle(triangle.points[2].x, triangle.points[2].y, 3, 3 , "red");
             this.drawTriangle(
                 triangle.points[0].x, triangle.points[0].y,
                 triangle.points[1].x, triangle.points[1].y,
-                triangle.points[2].x, triangle.points[2].y
+                triangle.points[2].x, triangle.points[2].y, "green"
             );
         }
 
@@ -163,8 +175,9 @@ export default class Renderer {
         return new Vector2(viewportX, viewportY);
     }
 
-    private drawTriangle(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number): void {
+    private drawTriangle(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, color: string): void {
         //console.log(x0, y0, x1, y1, x2, y2);
+        this.ctx.strokeStyle = color;
         this.ctx.beginPath();
         this.ctx.moveTo(x0, y0);
         this.ctx.lineTo(x1, y1);
