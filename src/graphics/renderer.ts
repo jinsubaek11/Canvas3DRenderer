@@ -4,6 +4,7 @@ import {Matrix, Matrix4x4} from "../math/matrix"
 import { loadCubeMeshData, loadObjFileData, Mesh, MESH_FACES, MESH_VERTICES } from "./mesh";
 import { Face, Triangle } from "./triangle";
 import { degreeToRadian } from "../math/util"; 
+import { LargeNumberLike } from "crypto";
 
 export default class Renderer {
     private canvas: HTMLCanvasElement;
@@ -28,7 +29,8 @@ export default class Renderer {
 
                 //this.cubeMesh = loadCubeMeshData();
                 //this.cubeMesh = loadObjFileData("./assets/cube.obj");    
-                this.mesh = await loadObjFileData("./assets/cube.obj"); 
+                //this.mesh = await loadObjFileData("./assets/cube.obj"); 
+                this.mesh = await loadObjFileData("./assets/f22.obj"); 
 
             }
             return true;
@@ -50,7 +52,7 @@ export default class Renderer {
             vertices[2] = this.mesh.vertices[face.c - 1];
 
             
-            const radian: number = deltaTime * 0.001;
+            const radian: number = deltaTime * 0.0005;
             const transformedVertices: Vector3[] = [];
 
             for (let i = 0; i < 3; i++) {
@@ -90,6 +92,7 @@ export default class Renderer {
     }
 
     public render(deltaTime: number): void {
+        //console.log(deltaTime);
         this.ctx.fillStyle = "black";
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -103,36 +106,14 @@ export default class Renderer {
                 triangle.points[1].x, triangle.points[1].y,
                 triangle.points[2].x, triangle.points[2].y, "green"
             );
+            this.drawFilledTriangle(
+                triangle.points[0].x, triangle.points[0].y,
+                triangle.points[1].x, triangle.points[1].y,
+                triangle.points[2].x, triangle.points[2].y, "green"
+            );
         }
 
-
-
-      //this.ctx.fillRect(200,200,10,10);
-      //this.ctx.fillStyle = 'rgba(255, 0, 0, 255)';
-        //this.drawGrid();
-
-         //const transformMatrix = Matrix.scale4x4(0.1, 0.1, 0.1);
-        //  const translationMatrix = Matrix.translation4x4(0, 0, 3);
-        //  const rotationMatrix = Matrix.rotationY4x4(deltaTime * 0.01);
-        //  //const transformMatrix = 
-        //  const vec4Cube = this.cube.map((vector: Vector3) => Vector.convertVec3ToVec4(vector));
-        //  const transformedCube = vec4Cube.map((vector: Vector4) => Vector.multiplyMatrix(translationMatrix, vector));
-        
-        //  const fov = 75;
-        //  const aspect = this.canvas.height / this.canvas.width;
-        //  const near = 0.1;
-        //  const far = 200;
-        //  const projectionMatrix: Matrix4x4 = Matrix.projection(fov, aspect, near, far);
-        
-        //  const projectedCube = transformedCube.map((vector: Vector4) => Vector.multiplyMatrix(projectionMatrix, vector));
-        //  //console.log(projectedCube);
-        
-        //  this.projectedCube = vec4Cube.map(({ x, y }: Vector4) => this.project(x, y));
-        // // this.projectedCube = projectedCube.map(({ x, y, z, w }: Vector4) => this.fitToViewport(x, y, z, w));
-
-        // this.projectedCube.forEach(({ x, y }: Vector2) => {
-        //     this.drawRectangle(x, y, 10, 10, 'rgba(255, 0, 0, 255)');
-        // });
+        //this.drawFilledTriangle(300, 100, 50, 400, 500, 700, "green");
     }
 
     private drawGrid(): void {
@@ -177,13 +158,89 @@ export default class Renderer {
 
     private drawTriangle(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, color: string): void {
         //console.log(x0, y0, x1, y1, x2, y2);
-        this.ctx.strokeStyle = color;
         this.ctx.beginPath();
         this.ctx.moveTo(x0, y0);
         this.ctx.lineTo(x1, y1);
         this.ctx.lineTo(x2, y2);
         this.ctx.closePath();
+        this.ctx.strokeStyle = color;
         this.ctx.stroke();
+    }
+
+    private drawFilledTriangle(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, color: string): void {
+        // screen Y order: high < middle < low
+        const high = { x: x0, y: y0 } as Vector2;
+        const middle = { x: x1, y: y1 } as Vector2;
+        const low = { x: x2, y: y2 } as Vector2;
+    
+        if (high.y > middle.y) {
+            const tempX = high.x;
+            const tempY = high.y;
+            high.x = middle.x;
+            high.y = middle.y;
+            middle.x = tempX;
+            middle.y = tempY;
+        }
+
+        if (middle.y > low.y) {
+            const tempX = low.x;
+            const tempY = low.y;
+            low.x = middle.x;
+            low.y = middle.y;
+            middle.x = tempX;
+            middle.y = tempY;
+        }
+
+        if (high.y > middle.y) {
+            const tempX = high.x;
+            const tempY = high.y;
+            high.x = middle.x;
+            high.y = middle.y;
+            middle.x = tempX;
+            middle.y = tempY;
+        }
+
+        if (middle.y == low.y) {
+            this.fillFlatBottomTriangle(x0, y0, x1, y1, x2, y2, color);
+        } else if (high.y == middle.y) {
+            this.fillFlatTopTriangle(x0, y0, x1, y1, x2, y2, color);
+        } else {
+            const mx: number = ((low.x - high.x) * (middle.y - high.y) / (low.y - high.y)) + high.x;
+            const my: number = middle.y;
+    
+            this.fillFlatBottomTriangle(high.x, high.y, middle.x, middle.y, mx, my, color);
+            this.fillFlatTopTriangle(middle.x, middle.y, mx, my, low.x, low.y, color);
+        }
+    }
+
+    private fillFlatBottomTriangle(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, color: string) {
+        const invSlopeLeft: number = (x1 - x0) / (y1 - y0);
+        const invSlopeRight: number = (x2 - x0) / (y2 - y0);
+
+        let xStart: number = x0;
+        let xEnd: number = x0;
+
+        for (let y = y0; y <= y2; y++) {
+            this.drawLine(xStart, y, xEnd, y, color);
+            xStart += invSlopeLeft;
+            xEnd += invSlopeRight;
+        }
+    }
+
+    private fillFlatTopTriangle(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, color: string) {
+            //invSlopeLeft = (x2 - x1) / (y2-  y1);
+            //invSlopeRight = (x2 - mx) / (y2 - my);
+            const invSlopeLeft = (x1 - x2) / (y1 - y2);
+            const invSlopeRight = (x0 - x2) / (y0 - y2);
+    
+            let xStart = x2;
+            let xEnd = x2;
+    
+            for (let y = y2; y >= y0; y--) {
+                this.drawLine(xStart, y, xEnd, y, color);
+                xStart -= invSlopeLeft;
+                xEnd -= invSlopeRight;
+            }
     }
 
     private drawRectangle(x: number, y: number, width: number, height: number, color: string): void {
@@ -199,4 +256,13 @@ export default class Renderer {
         this.ctx.fillStyle = color;
         this.ctx.fillRect(x, y, 1, 1);
     }  
+
+    private drawLine(x0: number, y0: number, x1: number, y1: number, color: string): void {
+        this.ctx.beginPath();
+        this.ctx.moveTo(x0, y0);
+        this.ctx.lineTo(x1, y1);
+        this.ctx.closePath();
+        this.ctx.strokeStyle = color;
+        this.ctx.stroke();
+    }
   }
