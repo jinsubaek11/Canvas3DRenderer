@@ -8,6 +8,25 @@
   </head>
   <body>
     <canvas id="canvas"></canvas>
+    <div id="control-items-container">
+      <h2>Rendering Modes</h2>
+      <div class="control-item wireframe">
+        <span>WireFrameLines</span>
+        <input type="radio">
+      </div>
+      <div class="control-item fill">
+        <span>FilledTriangles</span>
+        <input type="radio">
+      </div>
+      <div class="control-item point">
+        <span>Points</span>
+        <input type="radio">
+      </div>
+      <div class="control-item culling">
+        <span>BackFaceCulling</span>
+        <input type="radio">
+      </div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
