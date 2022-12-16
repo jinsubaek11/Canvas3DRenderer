@@ -37,6 +37,7 @@ canvas {
 .control-item input {
   width: 17px;
   height: 17px;
+  cursor: pointer;
 }
 
 .control-item label {
