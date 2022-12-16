@@ -4,16 +4,16 @@ interface Elements {
     [key: string]: HTMLElement | null;
 }
 
-interface RenderingStates {
+export interface RenderingStates {
     [key: string]: boolean;
 }
 
-const WIRE_FRAME_LINES: string = "wireFrameLines";
-const FILLED_TRIANGLES: string = "filledTriangles";
-const POINTS: string = "points";
-const BACKFACE_CULLING: string = "backfaceCulling";
+export const WIRE_FRAME_LINES: string = "wireFrameLines";
+export const FILLED_TRIANGLES: string = "filledTriangles";
+export const POINTS: string = "points";
+export const BACKFACE_CULLING: string = "backfaceCulling";
 
-export default class Controller {
+export class Controller {
     private static _instance: Controller;
     private _elements: Elements = {};
     private _renderingStates: RenderingStates = {};
@@ -25,9 +25,9 @@ export default class Controller {
         this._elements[BACKFACE_CULLING] = document.getElementById(BACKFACE_CULLING);
 
         this._renderingStates[WIRE_FRAME_LINES] = true;
-        this._renderingStates[FILLED_TRIANGLES] = false;
-        this._renderingStates[POINTS] = false;
-        this._renderingStates[BACKFACE_CULLING] = false;
+        this._renderingStates[FILLED_TRIANGLES] = true;
+        this._renderingStates[POINTS] = true;
+        this._renderingStates[BACKFACE_CULLING] = true;
     }
 
     public bindEvents(): void {

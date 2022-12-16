@@ -4,7 +4,7 @@ import {Matrix, Matrix4x4} from "../math/matrix"
 import { loadCubeMeshData, loadObjFileData, Mesh, MESH_FACES, MESH_VERTICES } from "./mesh";
 import { Face, Triangle } from "./triangle";
 import { degreeToRadian } from "../math/util"; 
-import { LargeNumberLike } from "crypto";
+import { RenderingStates, WIRE_FRAME_LINES, FILLED_TRIANGLES, POINTS, BACKFACE_CULLING } from "../ui/controller"
 
 export default class Renderer {
     private static _instance: Renderer;
@@ -48,7 +48,7 @@ export default class Renderer {
           }
     }
   
-    public update(deltaTime: number): void {
+    public update(renderingStates: RenderingStates, deltaTime: number): void {
         //console.log("update", deltaTime);
         this._triangledToRender = [];
 
@@ -79,7 +79,7 @@ export default class Renderer {
             const normal: Vector3 = Vector.crossVec3(vectorAB, vectorAC);
             const cameraRay: Vector3 = Vector.subtractVec3(this._camera, transformedVertices[0]);
 
-            if (Vector.dotVec3(cameraRay, normal) < 0) {
+            if (renderingStates[BACKFACE_CULLING] && Vector.dotVec3(cameraRay, normal) < 0) {
                 continue;
             }
 
@@ -94,32 +94,39 @@ export default class Renderer {
             }
 
             this._triangledToRender.push(triangle);
-            //console.log(this.triangledToRender.length);
-            //console.log(triangle);
         }
         
     }
 
-    public render(deltaTime: number): void {
+    public render(renderingStates: RenderingStates, deltaTime: number): void {
         //console.log(deltaTime);
         this._ctx.fillStyle = "black";
         this._ctx.fillRect(0, 0, this._canvas.width, this._canvas.height);
 
         for (let i = 0; i < this._triangledToRender.length; i++) {
             const triangle: Triangle = this._triangledToRender[i];
-            // this.drawRectangle(triangle.points[0].x, triangle.points[0].y, 3, 3 , "red");
-            // this.drawRectangle(triangle.points[1].x, triangle.points[1].y, 3, 3 , "red");
-            // this.drawRectangle(triangle.points[2].x, triangle.points[2].y, 3, 3 , "red");
-            this.drawTriangle(
-                triangle.points[0].x, triangle.points[0].y,
-                triangle.points[1].x, triangle.points[1].y,
-                triangle.points[2].x, triangle.points[2].y, "green"
-            );
-            this.drawFilledTriangle(
-                triangle.points[0].x, triangle.points[0].y,
-                triangle.points[1].x, triangle.points[1].y,
-                triangle.points[2].x, triangle.points[2].y, "grey"
-            );
+
+            if (renderingStates[WIRE_FRAME_LINES]) {
+                this.drawTriangle(
+                    triangle.points[0].x, triangle.points[0].y,
+                    triangle.points[1].x, triangle.points[1].y,
+                    triangle.points[2].x, triangle.points[2].y, "green"
+                );
+            }
+    
+            if (renderingStates[FILLED_TRIANGLES]) {
+                this.drawFilledTriangle(
+                    triangle.points[0].x, triangle.points[0].y,
+                    triangle.points[1].x, triangle.points[1].y,
+                    triangle.points[2].x, triangle.points[2].y, "grey"
+                );
+            }
+    
+            if (renderingStates[POINTS]) {
+                this.drawRectangle(triangle.points[0].x, triangle.points[0].y, 3, 3 , "red");
+                this.drawRectangle(triangle.points[1].x, triangle.points[1].y, 3, 3 , "red");
+                this.drawRectangle(triangle.points[2].x, triangle.points[2].y, 3, 3 , "red");
+            }
         }
 
         //this.drawFilledTriangle(300, 100, 50, 400, 500, 700, "green");
