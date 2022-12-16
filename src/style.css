@@ -39,7 +39,7 @@ canvas {
   height: 17px;
 }
 
-.control-item span {
+.control-item label {
   color: #ffffff;
   font-weight: 600;
 }

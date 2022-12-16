@@ -10,21 +10,21 @@
     <canvas id="canvas"></canvas>
     <div id="control-items-container">
       <h2>Rendering Modes</h2>
-      <div class="control-item wireframe">
-        <span>WireFrameLines</span>
-        <input type="radio">
+      <div class="control-item">
+        <label>WireFrameLines</label>
+        <input type="checkbox" id="wireFrameLines" checked>
       </div>
-      <div class="control-item fill">
-        <span>FilledTriangles</span>
-        <input type="radio">
+      <div class="control-item">
+        <label>FilledTriangles</label>
+        <input type="checkbox" id="filledTriangles">
       </div>
-      <div class="control-item point">
-        <span>Points</span>
-        <input type="radio">
+      <div class="control-item">
+        <label>Points</label>
+        <input type="checkbox" id="points">
       </div>
-      <div class="control-item culling">
-        <span>BackFaceCulling</span>
-        <input type="radio">
+      <div class="control-item">
+        <label>BackFaceCulling</label>
+        <input type="checkbox" id="backfaceCulling">
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
