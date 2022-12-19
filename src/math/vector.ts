@@ -1,8 +1,12 @@
 import { Matrix, Matrix4x4 } from "./matrix"
 
 export class Vector {
-    public static convertVec3ToVec4(a: Vector3): Vector4 {
-        return new Vector4(a.x, a.y, a.z, 1.0);
+    public static convertVec3ToVec4(v: Vector3): Vector4 {
+        return new Vector4(v.x, v.y, v.z, 1.0);
+    }
+
+    public static convertVec4ToVec3(v: Vector4): Vector3 {
+        return new Vector3(v.x / v.w, v.y / v.w, v.z / v.w);
     }
 
     public static multiplyMatrix4x4(m: Matrix4x4, v: Vector4) {
@@ -41,6 +45,15 @@ export class Vector {
         vector.y = Math.sin(r) * v.x + Math.cos(r) * v.y;
         vector.z = v.z;          
         
+        return vector;
+    }
+
+    public static subtractVec2(v1: Vector2, v2: Vector2): Vector2 {
+        const vector = new Vector2();
+
+        vector.x = v1.x - v2.x;
+        vector.y = v1.y - v2.y;
+
         return vector;
     }
 
