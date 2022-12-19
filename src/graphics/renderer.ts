@@ -4,7 +4,8 @@ import {Matrix, Matrix4x4} from "../math/matrix"
 import { loadCubeMeshData, loadObjFileData, Mesh, MESH_FACES, MESH_VERTICES } from "./mesh";
 import { Face, Triangle } from "./triangle";
 import { degreeToRadian } from "../math/util"; 
-import { RenderingStates, WIRE_FRAME_LINES, FILLED_TRIANGLES, POINTS, BACKFACE_CULLING } from "../ui/controller"
+import { RenderingStates, WIRE_FRAME_LINES, FILLED_TRIANGLES, POINTS, BACKFACE_CULLING, TEXTURED } from "../ui/controller"
+import { redbrickTexture, Texture, texture2, textureHeight, textureWidth } from "./texture";
 
 export default class Renderer {
     private static _instance: Renderer;
@@ -15,7 +16,9 @@ export default class Renderer {
     private _fovFactor: number = 200;
     private _triangledToRender: Triangle[] = [];
     private _camera: Vector3 = { x: 0, y: 0, z: 0 } as Vector3;
+    private _projectionMat: Matrix4x4;
     private _mesh: Mesh;
+    private _sampleTexture: any = [];
 
     public constructor() {
     
@@ -36,10 +39,18 @@ export default class Renderer {
                 this._canvas = Canvas.element;
                 this._ctx = Canvas.context;
 
-                //this.cubeMesh = loadCubeMeshData();
-                //this.cubeMesh = loadObjFileData("./assets/cube.obj");    
-                //this.mesh = await loadObjFileData("./assets/cube.obj"); 
-                this._mesh = await loadObjFileData("./assets/f22.obj"); 
+                this._sampleTexture = texture2;
+                console.log(texture2.length);
+                this._mesh = loadCubeMeshData();
+                //this._mesh = await loadObjFileData("./assets/cube.obj"); 
+                //this._mesh = await loadObjFileData("./assets/f22.obj"); 
+
+                const fov: number = 60;
+                const aspect: number = this._canvas.height / this._canvas.width;
+                const near: number = 0.1;
+                const far: number = 200;
+
+                this._projectionMat = Matrix.projection(fov, aspect, near, far);
 
             }
             return true;
@@ -52,6 +63,7 @@ export default class Renderer {
         //console.log("update", deltaTime);
         this._triangledToRender = [];
 
+
         for (let i = 0; i < this._mesh.faces.length; i++) {
             const face: Face = this._mesh.faces[i];
 
@@ -61,13 +73,15 @@ export default class Renderer {
             vertices[2] = this._mesh.vertices[face.c - 1];
 
             
-            const radian: number = deltaTime * 0.0005;
+            const radian: number = deltaTime * 0.0002;
             const transformedVertices: Vector3[] = [];
 
             for (let i = 0; i < 3; i++) {
-                let transformedVector = Vector.rotateZvec3(vertices[i], radian);
-                transformedVector = Vector.rotateYvec3(transformedVector, radian);
-                transformedVector = Vector.rotateXvec3(transformedVector, radian);
+                 let transformedVector = Vector.rotateZvec3(vertices[i], 0);
+                 //transformedVector = Vector.rotateYvec3(transformedVector, radian);
+                 //transformedVector = Vector.rotateXvec3(transformedVector, radian);
+                
+                //let transformedVector = vertices[i];
 
                 transformedVector.z += 4;
 
@@ -83,15 +97,36 @@ export default class Renderer {
                 continue;
             }
 
-            const triangle: Triangle = { points: [] };
+            const projectedPoints: Vector3[] = [];
+            const triangle: Triangle = { points: [], texCoords: [] };
 
             for (let i = 0; i < 3; i++) {
-                const projectedPoint: Vector2 = this.project(transformedVertices[i]);
+                 const projectedPoint: Vector3 = Vector.convertVec4ToVec3(
+                    Vector.multiplyMatrix4x4(this._projectionMat, Vector.convertVec3ToVec4(transformedVertices[i]))
+                );
+
+                // const projectedPoint: Vector2 = this.project(transformedVertices[i]);
+
+                projectedPoint.x *= this._canvas.width / 2;
+                projectedPoint.y *= -this._canvas.height / 2;
+
                 projectedPoint.x += this._canvas.width / 2;
                 projectedPoint.y += this._canvas.height / 2;
 
-                triangle.points[i] = projectedPoint;
+                projectedPoints.push(projectedPoint);
             }
+
+            triangle.points = [
+                { x: projectedPoints[0].x, y: projectedPoints[0].y } as Vector2,
+                { x: projectedPoints[1].x, y: projectedPoints[1].y } as Vector2,
+                { x: projectedPoints[2].x, y: projectedPoints[2].y } as Vector2,
+            ];
+
+            triangle.texCoords = [
+                { u: face.uvA.u, v: face.uvA.v },
+                { u: face.uvB.u, v: face.uvB.v },
+                { u: face.uvC.u, v: face.uvC.v }
+            ];
 
             this._triangledToRender.push(triangle);
         }
@@ -119,6 +154,15 @@ export default class Renderer {
                     triangle.points[0].x, triangle.points[0].y,
                     triangle.points[1].x, triangle.points[1].y,
                     triangle.points[2].x, triangle.points[2].y, "grey"
+                );
+            }
+
+            if (renderingStates[TEXTURED]) {
+                this.drawTexturedTriangle(
+                    triangle.points[0].x, triangle.points[0].y, triangle.texCoords[0].u, triangle.texCoords[0].v,
+                    triangle.points[1].x, triangle.points[1].y, triangle.texCoords[1].u, triangle.texCoords[1].v,
+                    triangle.points[2].x, triangle.points[2].y, triangle.texCoords[2].u, triangle.texCoords[2].v,
+                    this._sampleTexture
                 );
             }
     
@@ -181,6 +225,146 @@ export default class Renderer {
         this._ctx.closePath();
         this._ctx.strokeStyle = color;
         this._ctx.stroke();
+    }
+
+    private drawTexturedTriangle(
+        x0: number, y0: number, u0: number, v0: number,
+        x1: number, y1: number, u1: number, v1: number,
+        x2: number, y2: number, u2: number, v2: number, texture: number[]) {
+        
+        const high = { x: x0, y: y0, u: u0, v: v0 };
+        const middle = { x: x1, y: y1, u: u1, v: v1 };
+        const low = { x: x2, y: y2, u: u2, v: v2 };   
+
+        if (high.y > middle.y) {
+            const tempX = high.x;
+            const tempY = high.y;
+            const tempU = high.u;
+            const tempV = high.v;
+            high.x = middle.x;
+            high.y = middle.y;
+            high.u = middle.u;
+            high.v = middle.v;
+            middle.x = tempX;
+            middle.y = tempY;
+            middle.u = tempU;
+            middle.v = tempV;
+        }
+    
+        if (middle.y > low.y) {
+            const tempX = low.x;
+            const tempY = low.y;
+            const tempU = low.u;
+            const tempV = low.v;
+            low.x = middle.x;
+            low.y = middle.y;
+            low.u = middle.u;
+            low.v = middle.v;
+            middle.x = tempX;
+            middle.y = tempY;
+            middle.u = tempU;
+            middle.v = tempV;
+        }
+    
+        if (high.y > middle.y) {
+            const tempX = high.x;
+            const tempY = high.y;
+            const tempU = high.u;
+            const tempV = high.v;
+            high.x = middle.x;
+            high.y = middle.y;
+            high.u = middle.u;
+            high.v = middle.v;
+            middle.x = tempX;
+            middle.y = tempY;
+            middle.u = tempU;
+            middle.v = tempV;
+        }
+        
+        // const mx: number = ((low.x - high.x) * (middle.y - high.y) / (low.y - high.y)) + high.x;
+        // const my: number = middle.y;
+
+        // //       x0, y0 
+        // //   x1, y1   x2, y2
+
+        // let xStart: number = high.x;
+        // let xEnd: number = high.x;
+
+        // const invSlopeLeft: number = (x1 - x0) / (y1 - y0);
+        // const invSlopeRight: number = (x2 - x0) / (my - y0);
+
+        // for (let y = high.y; y <= my; y++) {
+        //     xStart += invSlopeLeft;
+        //     xEnd += invSlopeRight;
+
+        //     for (let x = xStart; x <= xEnd; x++) {
+        //         //this.drawPixel(x, y, "green");
+        //     }
+        // }
+        //console.log(u0, v0, u1, v1, u2, v2);
+        //console.log(high.u, high.v, middle.u, middle.v, low.u, low.v);
+        const pointA: Vector2 = new Vector2(high.x, high.y);
+        const pointB: Vector2 = new Vector2(middle.x, middle.y);
+        const pointC: Vector2 = new Vector2(low.x, low.y);
+
+        let invSlopeLeft: number = 0;
+        let invSlopeRight: number = 0;
+
+        if (middle.y - high.y != 0) {
+            invSlopeLeft = (middle.x - high.x) / Math.abs(middle.y - high.y);
+        }
+
+        if (low.y - high.y != 0) {
+            invSlopeRight = (low.x - high.x) / Math.abs(low.y - high.y);
+        }
+
+        if (middle.y - high.y != 0) {
+            for (let y = high.y; y <= middle.y; y++) {
+                let xStart: number = middle.x + (y - middle.y) * invSlopeLeft;
+                let xEnd: number = high.x + (y - high.y) * invSlopeRight;
+
+                if (xEnd < xStart)  {
+                    let temp: number = xStart;
+                    xStart = xEnd;
+                    xEnd = temp;
+                }
+
+                for (let x = xStart; x < xEnd; x++) {
+                    this.drawTexel(x, y, texture, pointA, pointB, pointC, high.u, high.v, middle.u, middle.v, low.u, low.v);
+                    //this.drawPixel(x, y, "yellow");
+                }
+            }
+        }
+
+        invSlopeLeft = 0;
+        invSlopeRight = 0;
+
+        if (low.y - middle.y != 0) {
+            invSlopeLeft = (low.x - middle.x) / Math.abs(low.y - middle.y);
+        }
+
+        if (low.y - high.y != 0) {
+            invSlopeRight = (low.x - high.x) / Math.abs(low.y - high.y);
+        }
+
+        if (low.y - middle.y != 0) {
+            for (let y = middle.y; y <= low.y; y++) {
+                let xStart: number = middle.x + (y - middle.y) * invSlopeLeft;
+                let xEnd: number = high.x + (y - high.y) * invSlopeRight;
+    
+                if (xEnd < xStart)  {
+                    let temp: number = xStart;
+                    xStart = xEnd;
+                    xEnd = temp;
+                }
+    
+                for (let x = xStart; x < xEnd; x++) {
+                    this.drawTexel(x, y, texture, pointA, pointB, pointC, high.u, high.v, middle.u, middle.v, low.u, low.v);
+                    //this.drawPixel(x, y, "yellow");
+                }
+            }
+        }
+
     }
 
     private drawFilledTriangle(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, color: string): void {
@@ -270,6 +454,46 @@ export default class Renderer {
             }
     }
 
+    private barycentricWeights(a: Vector2, b: Vector2, c: Vector2, p: Vector2) {
+        const ac: Vector2 = Vector.subtractVec2(c, a);
+        const ab: Vector2 = Vector.subtractVec2(b, a);
+        const pc: Vector2 = Vector.subtractVec2(c, p);
+        const pb: Vector2 = Vector.subtractVec2(b, p);
+        const ap: Vector2 = Vector.subtractVec2(p, a);
+
+        const areaParallelogramABC: number = ac.x * ab.y - ac.y * ab.x;
+        const alpha: number = (pc.x * pb.y - pc.y * pb.x) / areaParallelogramABC;
+        const beta: number = (ac.x * ap.y - ac.y * ap.x) / areaParallelogramABC;
+        const gamma: number = 1.0 - alpha - beta;
+
+        const weights: Vector3 = new Vector3(alpha, beta, gamma);
+
+        return weights;
+
+    }
+
+    private drawTexel(
+        x: number, y: number, texture: number[], pointA: Vector2, pointB: Vector2, pointC: Vector2, 
+        u0: number, v0: number, u1: number, v1: number, u2: number, v2: number
+    ) {
+        const pointP: Vector2 = new Vector2(x, y);
+        const weights: Vector3 = this.barycentricWeights(pointA, pointB, pointC, pointP);
+
+        const alpha: number = weights.x;
+        const beta: number = weights.y;
+        const gamma: number = weights.z;
+        //console.log(u0, v0, u1, v1, u2, v2);
+        const interpolatedU: number = u0 * alpha + u1 * beta + u2 * gamma;
+        const interpolatedV: number = v0 * alpha + v1 * beta + v2 * gamma;
+
+        //console.log(interpolatedU, interpolatedV);
+
+        const textureX: number = Math.abs(Math.floor(interpolatedU * textureWidth));
+        const textureY: number = Math.abs(Math.floor(interpolatedV * textureHeight));
+
+        this.drawPixel(x, y, texture[textureWidth * textureY + textureX]);
+    }
+
     private drawRectangle(x: number, y: number, width: number, height: number, color: string): void {
         if (x < 0 || y < 0 || x >= this._canvas.width || y >= this._canvas.height) return;
 
@@ -277,10 +501,13 @@ export default class Renderer {
         this._ctx.fillRect(x, y, width, height);
     }
 
-    private drawPixel(x: number, y: number, color: string): void {
+    private drawPixel(x: number, y: number, color: any): void {
         if (x < 0 || y < 0 || x >= this._canvas.width || y >= this._canvas.height) return;
-
-        this._ctx.fillStyle = color;
+        // 4개씩 묶어서 컬러값지정해야함, 하나씩 들어옴
+        //console.log(color);
+        if (!color) return;
+        //const {r, g, b, a} = color;
+        this._ctx.fillStyle = `rgba(${color.b}, ${color.g}, ${color.r}, ${color.a})`;
         this._ctx.fillRect(x, y, 1, 1);
     }  
 

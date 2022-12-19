@@ -2,6 +2,7 @@ import { Vector, Vector3 } from "../math/vector"
 import { Face } from "./triangle";
 
 import ObjFileParser from "obj-file-parser"
+import { Texture } from "./texture";
 
 export interface Mesh {
     vertices: Vector3[];
@@ -22,28 +23,28 @@ export const MESH_VERTICES: Vector3[] = [
 
 export const MESH_FACES: Face[] = [
     // front
-    { a: 1, b: 2, c: 3 },
-    { a: 1, b: 3, c: 4 },
+    { a: 1, b: 2, c: 3, uvA: { u: 0, v: 0 }, uvB: { u: 0, v: 1 }, uvC: { u: 1, v: 1 } },
+    { a: 1, b: 3, c: 4, uvA: { u: 0, v: 0 }, uvB: { u: 1, v: 1 }, uvC: { u: 1, v: 0 } },
 
     // right
-    { a: 4, b: 3, c: 5 },
-    { a: 4, b: 5, c: 6 },
+    { a: 4, b: 3, c: 5, uvA: { u: 0, v: 0 }, uvB: { u: 0, v: 1 }, uvC: { u: 1, v: 1 } },
+    { a: 4, b: 5, c: 6, uvA: { u: 0, v: 0 }, uvB: { u: 1, v: 1 }, uvC: { u: 1, v: 0 } },
 
     // back
-    { a: 6, b: 5, c: 7 },
-    { a: 6, b: 7, c: 8 },
+    { a: 6, b: 5, c: 7, uvA: { u: 0, v: 0 }, uvB: { u: 0, v: 1 }, uvC: { u: 1, v: 1 } },
+    { a: 6, b: 7, c: 8, uvA: { u: 0, v: 0 }, uvB: { u: 1, v: 1 }, uvC: { u: 1, v: 0 } },
 
     // left
-    { a: 8, b: 7, c: 2 },
-    { a: 8, b: 2, c: 1 },
+    { a: 8, b: 7, c: 2, uvA: { u: 0, v: 0 }, uvB: { u: 0, v: 1 }, uvC: { u: 1, v: 1 } },
+    { a: 8, b: 2, c: 1, uvA: { u: 0, v: 0 }, uvB: { u: 1, v: 1 }, uvC: { u: 1, v: 0 } },
 
     // top
-    { a: 2, b: 7, c: 5 },
-    { a: 2, b: 5, c: 3 },
+    { a: 2, b: 7, c: 5, uvA: { u: 0, v: 0 }, uvB: { u: 0, v: 1 }, uvC: { u: 1, v: 1 } },
+    { a: 2, b: 5, c: 3, uvA: { u: 0, v: 0 }, uvB: { u: 1, v: 1 }, uvC: { u: 1, v: 0 } },
 
     // bottom
-    { a: 6, b: 8, c: 1 },
-    { a: 6, b: 1, c: 4 },
+    { a: 6, b: 8, c: 1, uvA: { u: 0, v: 0 }, uvB: { u: 0, v: 1 }, uvC: { u: 1, v: 1 } },
+    { a: 6, b: 1, c: 4, uvA: { u: 0, v: 0 }, uvB: { u: 1, v: 1 }, uvC: { u: 1, v: 0 } },
 ];
 
 export const loadCubeMeshData = (): Mesh => {
