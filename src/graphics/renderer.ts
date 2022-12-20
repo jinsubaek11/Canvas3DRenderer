@@ -77,13 +77,13 @@ export default class Renderer {
             const transformedVertices: Vector3[] = [];
 
             for (let i = 0; i < 3; i++) {
-                 let transformedVector = Vector.rotateZvec3(vertices[i], 0);
-                 //transformedVector = Vector.rotateYvec3(transformedVector, radian);
-                 //transformedVector = Vector.rotateXvec3(transformedVector, radian);
+                 let transformedVector = Vector.rotateZvec3(vertices[i], radian);
+                 transformedVector = Vector.rotateYvec3(transformedVector, radian);
+                 transformedVector = Vector.rotateXvec3(transformedVector, radian);
                 
                 //let transformedVector = vertices[i];
 
-                transformedVector.z += 4;
+                transformedVector.z += 6;
 
                 transformedVertices.push(transformedVector);
             }
@@ -97,15 +97,17 @@ export default class Renderer {
                 continue;
             }
 
-            const projectedPoints: Vector3[] = [];
+            const projectedPoints: Vector4[] = [];
             const triangle: Triangle = { points: [], texCoords: [] };
 
             for (let i = 0; i < 3; i++) {
-                 const projectedPoint: Vector3 = Vector.convertVec4ToVec3(
-                    Vector.multiplyMatrix4x4(this._projectionMat, Vector.convertVec3ToVec4(transformedVertices[i]))
-                );
+                 const projectedPoint: Vector4 = Vector.multiplyMatrix4x4(
+                    this._projectionMat, Vector.convertVec3ToVec4(transformedVertices[i]));
 
                 // const projectedPoint: Vector2 = this.project(transformedVertices[i]);
+
+                projectedPoint.x /= projectedPoint.w;
+                projectedPoint.y /= projectedPoint.w;
 
                 projectedPoint.x *= this._canvas.width / 2;
                 projectedPoint.y *= -this._canvas.height / 2;
@@ -117,9 +119,9 @@ export default class Renderer {
             }
 
             triangle.points = [
-                { x: projectedPoints[0].x, y: projectedPoints[0].y } as Vector2,
-                { x: projectedPoints[1].x, y: projectedPoints[1].y } as Vector2,
-                { x: projectedPoints[2].x, y: projectedPoints[2].y } as Vector2,
+                new Vector4(projectedPoints[0].x, projectedPoints[0].y, projectedPoints[0].z, projectedPoints[0].w),
+                new Vector4(projectedPoints[1].x, projectedPoints[1].y, projectedPoints[1].z, projectedPoints[1].w),
+                new Vector4(projectedPoints[2].x, projectedPoints[2].y, projectedPoints[2].z, projectedPoints[2].w),
             ];
 
             triangle.texCoords = [
@@ -159,9 +161,9 @@ export default class Renderer {
 
             if (renderingStates[TEXTURED]) {
                 this.drawTexturedTriangle(
-                    triangle.points[0].x, triangle.points[0].y, triangle.texCoords[0].u, triangle.texCoords[0].v,
-                    triangle.points[1].x, triangle.points[1].y, triangle.texCoords[1].u, triangle.texCoords[1].v,
-                    triangle.points[2].x, triangle.points[2].y, triangle.texCoords[2].u, triangle.texCoords[2].v,
+                    triangle.points[0].x, triangle.points[0].y, triangle.points[0].z, triangle.points[0].w, triangle.texCoords[0].u, triangle.texCoords[0].v,
+                    triangle.points[1].x, triangle.points[1].y, triangle.points[1].z, triangle.points[1].w, triangle.texCoords[1].u, triangle.texCoords[1].v,
+                    triangle.points[2].x, triangle.points[2].y, triangle.points[2].z, triangle.points[2].w, triangle.texCoords[2].u, triangle.texCoords[2].v,
                     this._sampleTexture
                 );
             }
@@ -228,25 +230,31 @@ export default class Renderer {
     }
 
     private drawTexturedTriangle(
-        x0: number, y0: number, u0: number, v0: number,
-        x1: number, y1: number, u1: number, v1: number,
-        x2: number, y2: number, u2: number, v2: number, texture: number[]) {
+        x0: number, y0: number, z0: number, w0: number, u0: number, v0: number,
+        x1: number, y1: number, z1: number, w1: number, u1: number, v1: number,
+        x2: number, y2: number, z2: number, w2: number, u2: number, v2: number, texture: number[]) {
         
-        const high = { x: x0, y: y0, u: u0, v: v0 };
-        const middle = { x: x1, y: y1, u: u1, v: v1 };
-        const low = { x: x2, y: y2, u: u2, v: v2 };   
+        const high = { x: x0, y: y0, z: z0, w: w0, u: u0, v: v0 };
+        const middle = { x: x1, y: y1, z: z1, w: w1, u: u1, v: v1 };
+        const low = { x: x2, y: y2, z: z2, w: w2, u: u2, v: v2 };   
 
         if (high.y > middle.y) {
             const tempX = high.x;
             const tempY = high.y;
+            const tempZ = high.z;
+            const tempW = high.w;
             const tempU = high.u;
             const tempV = high.v;
             high.x = middle.x;
             high.y = middle.y;
+            high.z = middle.z;
+            high.w = middle.w;
             high.u = middle.u;
             high.v = middle.v;
             middle.x = tempX;
             middle.y = tempY;
+            middle.z = tempZ;
+            middle.w = tempW;
             middle.u = tempU;
             middle.v = tempV;
         }
@@ -254,14 +262,20 @@ export default class Renderer {
         if (middle.y > low.y) {
             const tempX = low.x;
             const tempY = low.y;
+            const tempZ = low.z;
+            const tempW = low.w;
             const tempU = low.u;
             const tempV = low.v;
             low.x = middle.x;
             low.y = middle.y;
+            low.z = middle.z;
+            low.w = middle.w;
             low.u = middle.u;
             low.v = middle.v;
             middle.x = tempX;
             middle.y = tempY;
+            middle.z = tempZ;
+            middle.w = tempW;
             middle.u = tempU;
             middle.v = tempV;
         }
@@ -269,14 +283,20 @@ export default class Renderer {
         if (high.y > middle.y) {
             const tempX = high.x;
             const tempY = high.y;
+            const tempZ = high.z;
+            const tempW = high.w;
             const tempU = high.u;
             const tempV = high.v;
             high.x = middle.x;
             high.y = middle.y;
+            high.z = middle.z;
+            high.w = middle.w;
             high.u = middle.u;
             high.v = middle.v;
             middle.x = tempX;
             middle.y = tempY;
+            middle.z = tempZ;
+            middle.w = tempW;
             middle.u = tempU;
             middle.v = tempV;
         }
@@ -303,9 +323,9 @@ export default class Renderer {
         // }
         //console.log(u0, v0, u1, v1, u2, v2);
         //console.log(high.u, high.v, middle.u, middle.v, low.u, low.v);
-        const pointA: Vector2 = new Vector2(high.x, high.y);
-        const pointB: Vector2 = new Vector2(middle.x, middle.y);
-        const pointC: Vector2 = new Vector2(low.x, low.y);
+        const pointA: Vector4 = new Vector4(high.x, high.y, high.z, high.w);
+        const pointB: Vector4 = new Vector4(middle.x, middle.y, middle.z, middle.w);
+        const pointC: Vector4 = new Vector4(low.x, low.y, low.z, low.w);
 
         let invSlopeLeft: number = 0;
         let invSlopeRight: number = 0;
@@ -473,18 +493,28 @@ export default class Renderer {
     }
 
     private drawTexel(
-        x: number, y: number, texture: number[], pointA: Vector2, pointB: Vector2, pointC: Vector2, 
+        x: number, y: number, texture: number[], pointA: Vector4, pointB: Vector4, pointC: Vector4, 
         u0: number, v0: number, u1: number, v1: number, u2: number, v2: number
     ) {
-        const pointP: Vector2 = new Vector2(x, y);
-        const weights: Vector3 = this.barycentricWeights(pointA, pointB, pointC, pointP);
+        const pointPvec2: Vector2 = new Vector2(x, y);
+        const pointAvec2: Vector2 = new Vector2(pointA.x, pointA.y);
+        const pointBvec2: Vector2 = new Vector2(pointB.x, pointB.y);
+        const pointCvec2: Vector2 = new Vector2(pointC.x, pointC.y);
+
+        const weights: Vector3 = this.barycentricWeights(pointAvec2, pointBvec2, pointCvec2, pointPvec2);
 
         const alpha: number = weights.x;
         const beta: number = weights.y;
         const gamma: number = weights.z;
         //console.log(u0, v0, u1, v1, u2, v2);
-        const interpolatedU: number = u0 * alpha + u1 * beta + u2 * gamma;
-        const interpolatedV: number = v0 * alpha + v1 * beta + v2 * gamma;
+
+        let interpolatedU: number = (u0 / pointA.w) * alpha + (u1 / pointB.w) * beta + (u2 / pointC.w) * gamma;
+        let interpolatedV: number = (v0 / pointA.w) * alpha + (v1 / pointB.w) * beta + (v2 / pointC.w) * gamma;
+
+        const interpolatedReciprocalW: number = (1 / pointA.w) * alpha + (1 / pointB.w) * beta + (1 / pointC.w) * gamma;
+
+        interpolatedU /= interpolatedReciprocalW;
+        interpolatedV /= interpolatedReciprocalW;
 
         //console.log(interpolatedU, interpolatedV);
 

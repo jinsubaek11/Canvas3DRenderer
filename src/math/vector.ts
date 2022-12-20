@@ -197,4 +197,20 @@ export class Vector4 {
     public get w(): number {
         return this._w;
     }
+
+    public set x(value: number) {
+        this._x = value;
+    }
+
+    public set y(value: number) {
+        this._y = value;
+    }
+
+    public set z(value: number) {
+        this._z = value;
+    }
+
+    public set w(value: number) {
+        this._w = value;
+    }
 }

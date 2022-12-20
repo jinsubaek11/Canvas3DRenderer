@@ -1,4 +1,4 @@
-import { Vector2 } from "../math/vector";
+import { Vector4 } from "../math/vector";
 import { Texture } from "./texture";
 
 export interface Face {
@@ -11,6 +11,6 @@ export interface Face {
 }
  
 export interface Triangle {
-    points: Vector2[];
+    points: Vector4[];
     texCoords: Texture[];
 }
