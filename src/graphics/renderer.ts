@@ -5,12 +5,14 @@ import { loadCubeMeshData, loadObjFileData, Mesh, MESH_FACES, MESH_VERTICES } fr
 import { Face, Triangle } from "./triangle";
 import { degreeToRadian } from "../math/util"; 
 import { RenderingStates, WIRE_FRAME_LINES, FILLED_TRIANGLES, POINTS, BACKFACE_CULLING, TEXTURED } from "../ui/controller"
-import { redbrickTexture, Texture, texture2, textureHeight, textureWidth } from "./texture";
+import { loadImageData, redbrickTexture, Texture, texture2, textureHeight, textureWidth } from "./texture";
 
 export default class Renderer {
     private static _instance: Renderer;
     private _canvas: HTMLCanvasElement;
     private _ctx: CanvasRenderingContext2D;
+    private _colorBufferCtx: CanvasRenderingContext2D;
+    private _zBuffer: number[];
     private _cube: Vector3[] = [];
     private _projectedCube: Vector2[] = [];
     private _fovFactor: number = 200;
@@ -19,6 +21,7 @@ export default class Renderer {
     private _projectionMat: Matrix4x4;
     private _mesh: Mesh;
     private _sampleTexture: any = [];
+    private _texture;
 
     public constructor() {
     
@@ -34,17 +37,23 @@ export default class Renderer {
 
     public async setup(): Promise<boolean> {
         if (Canvas.init()) {
-            if (Canvas.context != null)
+            if (Canvas.canvasViewCtx && Canvas.canvasColorBufferCtx)
             {
-                this._canvas = Canvas.element;
-                this._ctx = Canvas.context;
-
-                this._sampleTexture = texture2;
-                console.log(texture2.length);
-                this._mesh = loadCubeMeshData();
+                this._canvas = Canvas.canvasView;
+                this._ctx = Canvas.canvasViewCtx;
+                this._colorBufferCtx = Canvas.canvasColorBufferCtx;
+                this._zBuffer = Canvas.zBuffer;
+                //console.log(this._zBuffer);
+                //this._sampleTexture = texture2;
+                //console.log(texture2.length);
                 //this._mesh = await loadObjFileData("./assets/cube.obj"); 
-                //this._mesh = await loadObjFileData("./assets/f22.obj"); 
+                //this._texture = await loadImageData("./assets/cube.png");
+                //this._mesh = loadCubeMeshData();
+                this._mesh = await loadObjFileData("./assets/f22.obj"); 
+                this._texture = await loadImageData("./assets/f22.png");
 
+                //console.log(img);
+                //this._sampleTexture = img.data;
                 const fov: number = 60;
                 const aspect: number = this._canvas.height / this._canvas.width;
                 const near: number = 0.1;
@@ -68,9 +77,9 @@ export default class Renderer {
             const face: Face = this._mesh.faces[i];
 
             const vertices: Vector3[] = [];
-            vertices[0] = this._mesh.vertices[face.a - 1];
-            vertices[1] = this._mesh.vertices[face.b - 1];
-            vertices[2] = this._mesh.vertices[face.c - 1];
+            vertices[0] = this._mesh.vertices[face.a];
+            vertices[1] = this._mesh.vertices[face.b];
+            vertices[2] = this._mesh.vertices[face.c];
 
             
             const radian: number = deltaTime * 0.0002;
@@ -136,9 +145,11 @@ export default class Renderer {
     }
 
     public render(renderingStates: RenderingStates, deltaTime: number): void {
-        //console.log(deltaTime);
-        this._ctx.fillStyle = "black";
-        this._ctx.fillRect(0, 0, this._canvas.width, this._canvas.height);
+
+       this._colorBufferCtx.fillStyle = "black";
+       this._colorBufferCtx.fillRect(0, 0, this._canvas.width, this._canvas.height);
+       //this._zBuffer = Canvas.clearZbuffer();
+       this._zBuffer = Canvas.clearZbuffer();
 
         for (let i = 0; i < this._triangledToRender.length; i++) {
             const triangle: Triangle = this._triangledToRender[i];
@@ -164,15 +175,17 @@ export default class Renderer {
                     triangle.points[0].x, triangle.points[0].y, triangle.points[0].z, triangle.points[0].w, triangle.texCoords[0].u, triangle.texCoords[0].v,
                     triangle.points[1].x, triangle.points[1].y, triangle.points[1].z, triangle.points[1].w, triangle.texCoords[1].u, triangle.texCoords[1].v,
                     triangle.points[2].x, triangle.points[2].y, triangle.points[2].z, triangle.points[2].w, triangle.texCoords[2].u, triangle.texCoords[2].v,
-                    this._sampleTexture
+                    this._texture
                 );
             }
-    
+
             if (renderingStates[POINTS]) {
                 this.drawRectangle(triangle.points[0].x, triangle.points[0].y, 3, 3 , "red");
                 this.drawRectangle(triangle.points[1].x, triangle.points[1].y, 3, 3 , "red");
                 this.drawRectangle(triangle.points[2].x, triangle.points[2].y, 3, 3 , "red");
             }
+
+            this._ctx.drawImage(this._colorBufferCtx.canvas, 0, 0);
         }
 
         //this.drawFilledTriangle(300, 100, 50, 400, 500, 700, "green");
@@ -220,19 +233,19 @@ export default class Renderer {
 
     private drawTriangle(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, color: string): void {
         //console.log(x0, y0, x1, y1, x2, y2);
-        this._ctx.beginPath();
-        this._ctx.moveTo(x0, y0);
-        this._ctx.lineTo(x1, y1);
-        this._ctx.lineTo(x2, y2);
-        this._ctx.closePath();
-        this._ctx.strokeStyle = color;
-        this._ctx.stroke();
+        this._colorBufferCtx.beginPath();
+        this._colorBufferCtx.moveTo(x0, y0);
+        this._colorBufferCtx.lineTo(x1, y1);
+        this._colorBufferCtx.lineTo(x2, y2);
+        this._colorBufferCtx.closePath();
+        this._colorBufferCtx.strokeStyle = color;
+        this._colorBufferCtx.stroke();
     }
 
     private drawTexturedTriangle(
         x0: number, y0: number, z0: number, w0: number, u0: number, v0: number,
         x1: number, y1: number, z1: number, w1: number, u1: number, v1: number,
-        x2: number, y2: number, z2: number, w2: number, u2: number, v2: number, texture: number[]) {
+        x2: number, y2: number, z2: number, w2: number, u2: number, v2: number, texture: any) {
         
         const high = { x: x0, y: y0, z: z0, w: w0, u: u0, v: v0 };
         const middle = { x: x1, y: y1, z: z1, w: w1, u: u1, v: v1 };
@@ -301,28 +314,10 @@ export default class Renderer {
             middle.v = tempV;
         }
         
-        // const mx: number = ((low.x - high.x) * (middle.y - high.y) / (low.y - high.y)) + high.x;
-        // const my: number = middle.y;
+        high.v = 1.0 - high.v;
+        middle.v = 1.0 - middle.v;
+        low.v = 1.0 - low.v;
 
-        // //       x0, y0 
-        // //   x1, y1   x2, y2
-
-        // let xStart: number = high.x;
-        // let xEnd: number = high.x;
-
-        // const invSlopeLeft: number = (x1 - x0) / (y1 - y0);
-        // const invSlopeRight: number = (x2 - x0) / (my - y0);
-
-        // for (let y = high.y; y <= my; y++) {
-        //     xStart += invSlopeLeft;
-        //     xEnd += invSlopeRight;
-
-        //     for (let x = xStart; x <= xEnd; x++) {
-        //         //this.drawPixel(x, y, "green");
-        //     }
-        // }
-        //console.log(u0, v0, u1, v1, u2, v2);
-        //console.log(high.u, high.v, middle.u, middle.v, low.u, low.v);
         const pointA: Vector4 = new Vector4(high.x, high.y, high.z, high.w);
         const pointB: Vector4 = new Vector4(middle.x, middle.y, middle.z, middle.w);
         const pointC: Vector4 = new Vector4(low.x, low.y, low.z, low.w);
@@ -493,7 +488,7 @@ export default class Renderer {
     }
 
     private drawTexel(
-        x: number, y: number, texture: number[], pointA: Vector4, pointB: Vector4, pointC: Vector4, 
+        x: number, y: number, texture: any, pointA: Vector4, pointB: Vector4, pointC: Vector4, 
         u0: number, v0: number, u1: number, v1: number, u2: number, v2: number
     ) {
         const pointPvec2: Vector2 = new Vector2(x, y);
@@ -511,24 +506,28 @@ export default class Renderer {
         let interpolatedU: number = (u0 / pointA.w) * alpha + (u1 / pointB.w) * beta + (u2 / pointC.w) * gamma;
         let interpolatedV: number = (v0 / pointA.w) * alpha + (v1 / pointB.w) * beta + (v2 / pointC.w) * gamma;
 
-        const interpolatedReciprocalW: number = (1 / pointA.w) * alpha + (1 / pointB.w) * beta + (1 / pointC.w) * gamma;
+        let interpolatedReciprocalW: number = (1 / pointA.w) * alpha + (1 / pointB.w) * beta + (1 / pointC.w) * gamma;
 
         interpolatedU /= interpolatedReciprocalW;
         interpolatedV /= interpolatedReciprocalW;
 
-        //console.log(interpolatedU, interpolatedV);
+        const textureX: number = Math.abs(Math.floor(interpolatedU * texture.width)) % texture.width;
+        const textureY: number = Math.abs(Math.floor(interpolatedV * texture.height)) % texture.height;
 
-        const textureX: number = Math.abs(Math.floor(interpolatedU * textureWidth));
-        const textureY: number = Math.abs(Math.floor(interpolatedV * textureHeight));
+        interpolatedReciprocalW = 1.0 - interpolatedReciprocalW;
 
-        this.drawPixel(x, y, texture[textureWidth * textureY + textureX]);
+        if (interpolatedReciprocalW < this._zBuffer[window.innerWidth * Math.floor(y) + Math.floor(x)]) {
+            this.drawPixel(x, y, texture.data[texture.width * textureY + textureX]);
+            this._zBuffer[window.innerWidth * Math.floor(y) + Math.floor(x)] = interpolatedReciprocalW;
+        }
+
     }
 
     private drawRectangle(x: number, y: number, width: number, height: number, color: string): void {
         if (x < 0 || y < 0 || x >= this._canvas.width || y >= this._canvas.height) return;
 
-        this._ctx.fillStyle = color;
-        this._ctx.fillRect(x, y, width, height);
+        this._colorBufferCtx.fillStyle = color;
+        this._colorBufferCtx.fillRect(x, y, width, height);
     }
 
     private drawPixel(x: number, y: number, color: any): void {
@@ -537,16 +536,16 @@ export default class Renderer {
         //console.log(color);
         if (!color) return;
         //const {r, g, b, a} = color;
-        this._ctx.fillStyle = `rgba(${color.b}, ${color.g}, ${color.r}, ${color.a})`;
-        this._ctx.fillRect(x, y, 1, 1);
+        this._colorBufferCtx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`;
+        this._colorBufferCtx.fillRect(x, y, 1, 1);
     }  
 
     private drawLine(x0: number, y0: number, x1: number, y1: number, color: string): void {
-        this._ctx.beginPath();
-        this._ctx.moveTo(x0, y0);
-        this._ctx.lineTo(x1, y1);
-        this._ctx.closePath();
-        this._ctx.strokeStyle = color;
-        this._ctx.stroke();
+        this._colorBufferCtx.beginPath();
+        this._colorBufferCtx.moveTo(x0, y0);
+        this._colorBufferCtx.lineTo(x1, y1);
+        this._colorBufferCtx.closePath();
+        this._colorBufferCtx.strokeStyle = color;
+        this._colorBufferCtx.stroke();
     }
   }
