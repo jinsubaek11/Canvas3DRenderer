@@ -6,6 +6,7 @@ import { Face, Triangle } from "./triangle";
 import { degreeToRadian } from "../math/util"; 
 import { RenderingStates, WIRE_FRAME_LINES, FILLED_TRIANGLES, POINTS, BACKFACE_CULLING, TEXTURED } from "../ui/controller"
 import { loadImageData, redbrickTexture, Texture, texture2, textureHeight, textureWidth } from "./texture";
+import Camera from "./camera";
 
 export default class Renderer {
     private static _instance: Renderer;
@@ -17,7 +18,8 @@ export default class Renderer {
     private _projectedCube: Vector2[] = [];
     private _fovFactor: number = 200;
     private _triangledToRender: Triangle[] = [];
-    private _camera: Vector3 = { x: 0, y: 0, z: 0 } as Vector3;
+    private _camera: Camera;
+    private _viewMat: Matrix4x4;
     private _projectionMat: Matrix4x4;
     private _mesh: Mesh;
     private _sampleTexture: any = [];
@@ -54,6 +56,8 @@ export default class Renderer {
 
                 //console.log(img);
                 //this._sampleTexture = img.data;
+                this._camera = new Camera(new Vector3(0, 0, -10), new Vector3(0, 0, 0));
+
                 const fov: number = 60;
                 const aspect: number = this._canvas.height / this._canvas.width;
                 const near: number = 0.1;
@@ -85,14 +89,17 @@ export default class Renderer {
             const radian: number = deltaTime * 0.0002;
             const transformedVertices: Vector3[] = [];
 
-            for (let i = 0; i < 3; i++) {
-                 let transformedVector = Vector.rotateZvec3(vertices[i], radian);
-                 transformedVector = Vector.rotateYvec3(transformedVector, radian);
-                 transformedVector = Vector.rotateXvec3(transformedVector, radian);
-                
-                //let transformedVector = vertices[i];
+            //this._camera.position.x += 0.0001;
 
-                transformedVector.z += 6;
+            for (let i = 0; i < 3; i++) {
+                 let transformedVector = Vector.rotateZvec3(vertices[i], 0);
+                //  transformedVector = Vector.rotateYvec3(transformedVector, radian);
+                //  transformedVector = Vector.rotateXvec3(transformedVector, radian);
+
+                transformedVector = Vector.convertVec4ToVec3(Vector.multiplyMatrix4x4(
+                    this._camera.lookAt(this._camera.direction, new Vector3(0, 1, 0)), 
+                    Vector.convertVec3ToVec4(transformedVector)
+                )); 
 
                 transformedVertices.push(transformedVector);
             }
@@ -100,7 +107,7 @@ export default class Renderer {
             const vectorAB: Vector3 = Vector.subtractVec3(transformedVertices[1], transformedVertices[0]);
             const vectorAC: Vector3 = Vector.subtractVec3(transformedVertices[2], transformedVertices[0]);
             const normal: Vector3 = Vector.crossVec3(vectorAB, vectorAC);
-            const cameraRay: Vector3 = Vector.subtractVec3(this._camera, transformedVertices[0]);
+            const cameraRay: Vector3 = Vector.subtractVec3(this._camera.position, transformedVertices[0]);
 
             if (renderingStates[BACKFACE_CULLING] && Vector.dotVec3(cameraRay, normal) < 0) {
                 continue;
@@ -203,15 +210,15 @@ export default class Renderer {
         }
     }
 
-    private project(v: Vector3): Vector2 {
-        v.z += this._camera.z;
-        const projectedX: number = this._fovFactor * v.x / v.z;
-        const projectedY: number = this._fovFactor * v.y / v.z;
-        const projectedPoints: Vector2 = new Vector2(projectedX, projectedY);
+    // private project(v: Vector3): Vector2 {
+    //     v.z += this._camera.z;
+    //     const projectedX: number = this._fovFactor * v.x / v.z;
+    //     const projectedY: number = this._fovFactor * v.y / v.z;
+    //     const projectedPoints: Vector2 = new Vector2(projectedX, projectedY);
 
-        return projectedPoints;
-       // this.projectedCube.push(projectedPoints);
-    }
+    //     return projectedPoints;
+    //    // this.projectedCube.push(projectedPoints);
+    // }
 
     private perspectiveDivide(x: number, y: number, z: number, w: number): Vector3 {
         return new Vector3(x / w, y / w, z / w);
