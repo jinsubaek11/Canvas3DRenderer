@@ -77,6 +77,15 @@ export class Vector {
         return vector;
     }
 
+    public static multiplyScalar(v: Vector3, s: number) {
+        const vector = new Vector3();
+        vector.x = v.x  * s;
+        vector.y = v.y  * s;
+        vector.z = v.z  * s;
+
+        return vector;
+    }
+
     public static dotVec3(v1: Vector3, v2: Vector3): number {
         return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
     }

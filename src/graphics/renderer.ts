@@ -4,7 +4,7 @@ import {Matrix, Matrix4x4} from "../math/matrix"
 import { loadCubeMeshData, loadObjFileData, Mesh, MESH_FACES, MESH_VERTICES } from "./mesh";
 import { Face, Triangle } from "./triangle";
 import { degreeToRadian } from "../math/util"; 
-import { RenderingStates, WIRE_FRAME_LINES, FILLED_TRIANGLES, POINTS, BACKFACE_CULLING, TEXTURED } from "../ui/controller"
+import { RenderingStates, WIRE_FRAME_LINES, FILLED_TRIANGLES, POINTS, BACKFACE_CULLING, TEXTURED, Controller } from "../ui/controller"
 import { loadImageData, redbrickTexture, Texture, texture2, textureHeight, textureWidth } from "./texture";
 import Camera from "./camera";
 
@@ -24,8 +24,9 @@ export default class Renderer {
     private _mesh: Mesh;
     private _sampleTexture: any = [];
     private _texture;
+    private _controller: Controller;
 
-    public constructor() {
+    private constructor() {
     
     }
 
@@ -45,18 +46,12 @@ export default class Renderer {
                 this._ctx = Canvas.canvasViewCtx;
                 this._colorBufferCtx = Canvas.canvasColorBufferCtx;
                 this._zBuffer = Canvas.zBuffer;
-                //console.log(this._zBuffer);
-                //this._sampleTexture = texture2;
-                //console.log(texture2.length);
-                //this._mesh = await loadObjFileData("./assets/cube.obj"); 
-                //this._texture = await loadImageData("./assets/cube.png");
-                //this._mesh = loadCubeMeshData();
+
                 this._mesh = await loadObjFileData("./assets/f22.obj"); 
                 this._texture = await loadImageData("./assets/f22.png");
 
-                //console.log(img);
-                //this._sampleTexture = img.data;
-                this._camera = new Camera(new Vector3(0, 0, -10), new Vector3(0, 0, 0));
+                this._controller =  Controller.getInstance();
+                this._camera = new Camera(new Vector3(0, 0, -10));
 
                 const fov: number = 60;
                 const aspect: number = this._canvas.height / this._canvas.width;
@@ -91,13 +86,17 @@ export default class Renderer {
 
             //this._camera.position.x += 0.0001;
 
+            this._camera.update(this._controller.movementStates, this._controller.mouseStates, deltaTime);
+            this._controller.mouseStates.dx = 0;
+            this._controller.mouseStates.dy = 0;
+
             for (let i = 0; i < 3; i++) {
                  let transformedVector = Vector.rotateZvec3(vertices[i], 0);
                 //  transformedVector = Vector.rotateYvec3(transformedVector, radian);
                 //  transformedVector = Vector.rotateXvec3(transformedVector, radian);
 
                 transformedVector = Vector.convertVec4ToVec3(Vector.multiplyMatrix4x4(
-                    this._camera.lookAt(this._camera.direction, new Vector3(0, 1, 0)), 
+                    this._camera.getViewMatrix(), 
                     Vector.convertVec3ToVec4(transformedVector)
                 )); 
 
