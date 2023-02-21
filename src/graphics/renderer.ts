@@ -7,6 +7,7 @@ import { degreeToRadian } from "../math/util";
 import { RenderingStates, WIRE_FRAME_LINES, FILLED_TRIANGLES, POINTS, BACKFACE_CULLING, TEXTURED, Controller } from "../ui/controller"
 import { loadImageData, redbrickTexture, Texture, texture2, textureHeight, textureWidth } from "./texture";
 import Camera from "./camera";
+import { Frustum, Polygon } from "../math/frustum";
 
 export default class Renderer {
     private static _instance: Renderer;
@@ -25,6 +26,7 @@ export default class Renderer {
     private _sampleTexture: any = [];
     private _texture;
     private _controller: Controller;
+    private _frustum: Frustum;
 
     private constructor() {
     
@@ -47,8 +49,9 @@ export default class Renderer {
                 this._colorBufferCtx = Canvas.canvasColorBufferCtx;
                 this._zBuffer = Canvas.zBuffer;
 
-                this._mesh = await loadObjFileData("./assets/f22.obj"); 
-                this._texture = await loadImageData("./assets/f22.png");
+                this._mesh = await loadObjFileData("./assets/cube.obj"); 
+                //this._mesh = await loadObjFileData("./assets/f22.obj"); 
+                // this._texture = await loadImageData("./assets/f22.png");
 
                 this._controller =  Controller.getInstance();
                 this._camera = new Camera(new Vector3(0, 0, -10));
@@ -60,6 +63,8 @@ export default class Renderer {
 
                 this._projectionMat = Matrix.projection(fov, aspect, near, far);
 
+                this._frustum = new Frustum(fov, near, far);
+                console.log(this._frustum);
             }
             return true;
           } else {
@@ -73,6 +78,7 @@ export default class Renderer {
 
 
         for (let i = 0; i < this._mesh.faces.length; i++) {
+            if (i != 5) continue;
             const face: Face = this._mesh.faces[i];
 
             const vertices: Vector3[] = [];
@@ -91,9 +97,9 @@ export default class Renderer {
             this._controller.mouseStates.dy = 0;
 
             for (let i = 0; i < 3; i++) {
-                 let transformedVector = Vector.rotateZvec3(vertices[i], 0);
+                 let transformedVector = Vector.rotateZvec3(vertices[i], radian);
                 //  transformedVector = Vector.rotateYvec3(transformedVector, radian);
-                //  transformedVector = Vector.rotateXvec3(transformedVector, radian);
+                //  transformedVector = Vector.rotateXvec3(transformedVector, degreeToRadian(30));
 
                 transformedVector = Vector.convertVec4ToVec3(Vector.multiplyMatrix4x4(
                     this._camera.getViewMatrix(), 
@@ -111,6 +117,10 @@ export default class Renderer {
             if (renderingStates[BACKFACE_CULLING] && Vector.dotVec3(cameraRay, normal) < 0) {
                 continue;
             }
+
+            const polygon: Polygon = new Polygon(transformedVertices[0], transformedVertices[1], transformedVertices[2]);           
+            polygon.clip(this._frustum);
+            console.log(polygon.vertices.length);
 
             const projectedPoints: Vector4[] = [];
             const triangle: Triangle = { points: [], texCoords: [] };
@@ -193,7 +203,6 @@ export default class Renderer {
 
             this._ctx.drawImage(this._colorBufferCtx.canvas, 0, 0);
         }
-
         //this.drawFilledTriangle(300, 100, 50, 400, 500, 700, "green");
     }
 

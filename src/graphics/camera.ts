@@ -8,7 +8,7 @@ export default class Camera {
     private _direction: Vector3 = new Vector3(0, 0, 1);
     private _yaw: number = 90;
     private _pitch: number = 0;
-    private _speed: number = 0.02;
+    private _speed: number = 2;
     private _forward: Vector3 = new Vector3();
     private _right: Vector3 = new Vector3();
     private _up: Vector3 = new Vector3();
