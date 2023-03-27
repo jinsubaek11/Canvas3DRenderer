@@ -129,24 +129,24 @@ export class Controller {
             }
         })
 
-        window.addEventListener('mousemove', (event: MouseEvent) => {
-            if (this._isFirstMove) {
-                this._beforeX = event.clientX;
-                this._beforeY = event.clientY;
-                this._isFirstMove = false;
-                return;
-            }
-            const deltaX: number = event.clientX - this._beforeX;
-            const deltaY: number = this._beforeY - event.clientY;
+        // window.addEventListener('mousemove', (event: MouseEvent) => {
+        //     if (this._isFirstMove) {
+        //         this._beforeX = event.clientX;
+        //         this._beforeY = event.clientY;
+        //         this._isFirstMove = false;
+        //         return;
+        //     }
+        //     const deltaX: number = event.clientX - this._beforeX;
+        //     const deltaY: number = this._beforeY - event.clientY;
 
-            this._beforeX = event.clientX;
-            this._beforeY = event.clientY;
+        //     this._beforeX = event.clientX;
+        //     this._beforeY = event.clientY;
 
-            this.mouseStates.dx = deltaX;
-            this.mouseStates.dy = deltaY;
+        //     this.mouseStates.dx = deltaX;
+        //     this.mouseStates.dy = deltaY;
 
-            //console.log(this._mouseStates.yaw, this._mouseStates.pitch);
-        })
+        //     //console.log(this._mouseStates.yaw, this._mouseStates.pitch);
+        // })
     }
 
     public static getInstance(): Controller {

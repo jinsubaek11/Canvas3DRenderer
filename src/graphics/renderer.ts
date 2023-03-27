@@ -3,11 +3,13 @@ import {Vector4, Vector3, Vector2, Vector} from "../math/vector"
 import {Matrix, Matrix4x4} from "../math/matrix"
 import { loadCubeMeshData, loadObjFileData, Mesh, MESH_FACES, MESH_VERTICES } from "./mesh";
 import { Face, Triangle } from "./triangle";
-import { degreeToRadian } from "../math/util"; 
+import { degreeToRadian, radianToDegree } from "../math/util"; 
 import { RenderingStates, WIRE_FRAME_LINES, FILLED_TRIANGLES, POINTS, BACKFACE_CULLING, TEXTURED, Controller } from "../ui/controller"
 import { loadImageData, redbrickTexture, Texture, texture2, textureHeight, textureWidth } from "./texture";
 import Camera from "./camera";
-import { Frustum, Polygon } from "../math/frustum";
+import { Frustum } from "./frustum";
+import Polygon from "./polygon";
+
 
 export default class Renderer {
     private static _instance: Renderer;
@@ -50,20 +52,23 @@ export default class Renderer {
                 this._zBuffer = Canvas.zBuffer;
 
                 this._mesh = await loadObjFileData("./assets/cube.obj"); 
+                this._texture = await loadImageData("./assets/cube.png"); 
                 //this._mesh = await loadObjFileData("./assets/f22.obj"); 
-                // this._texture = await loadImageData("./assets/f22.png");
+                //this._texture = await loadImageData("./assets/f22.png");
 
                 this._controller =  Controller.getInstance();
                 this._camera = new Camera(new Vector3(0, 0, -10));
 
-                const fov: number = 60;
-                const aspect: number = this._canvas.height / this._canvas.width;
+                const aspectX: number = this._canvas.width / this._canvas.height;
+                const aspectY: number = this._canvas.height / this._canvas.width;
+                const fovY: number = 60;
+                const fovX: number = radianToDegree(Math.atan(Math.tan(degreeToRadian(fovY) / 2) * aspectX)) * 2;
                 const near: number = 0.1;
                 const far: number = 200;
 
-                this._projectionMat = Matrix.projection(fov, aspect, near, far);
+                this._projectionMat = Matrix.projection(fovY, aspectY, near, far);
 
-                this._frustum = new Frustum(fov, near, far);
+                this._frustum = new Frustum(fovX, fovY, near, far);
                 console.log(this._frustum);
             }
             return true;
@@ -78,14 +83,13 @@ export default class Renderer {
 
 
         for (let i = 0; i < this._mesh.faces.length; i++) {
-            if (i != 5) continue;
+            //if (i != 5) continue;
             const face: Face = this._mesh.faces[i];
 
             const vertices: Vector3[] = [];
             vertices[0] = this._mesh.vertices[face.a];
             vertices[1] = this._mesh.vertices[face.b];
             vertices[2] = this._mesh.vertices[face.c];
-
             
             const radian: number = deltaTime * 0.0002;
             const transformedVertices: Vector3[] = [];
@@ -118,44 +122,38 @@ export default class Renderer {
                 continue;
             }
 
-            const polygon: Polygon = new Polygon(transformedVertices[0], transformedVertices[1], transformedVertices[2]);           
-            polygon.clip(this._frustum);
-            console.log(polygon.vertices.length);
-
-            const projectedPoints: Vector4[] = [];
-            const triangle: Triangle = { points: [], texCoords: [] };
-
-            for (let i = 0; i < 3; i++) {
-                 const projectedPoint: Vector4 = Vector.multiplyMatrix4x4(
-                    this._projectionMat, Vector.convertVec3ToVec4(transformedVertices[i]));
-
-                // const projectedPoint: Vector2 = this.project(transformedVertices[i]);
-
-                projectedPoint.x /= projectedPoint.w;
-                projectedPoint.y /= projectedPoint.w;
-
-                projectedPoint.x *= this._canvas.width / 2;
-                projectedPoint.y *= -this._canvas.height / 2;
-
-                projectedPoint.x += this._canvas.width / 2;
-                projectedPoint.y += this._canvas.height / 2;
-
-                projectedPoints.push(projectedPoint);
+            const polygon: Polygon = new Polygon(
+                transformedVertices[0], transformedVertices[1], transformedVertices[2],
+                face.uvA, face.uvB, face.uvC
+            );     
+            polygon.clip(this._frustum);      
+            const clippedTriangles: Triangle[] = polygon.generateTriangles();
+            
+            for (let i = 0; i < clippedTriangles.length; i++) {
+                const projectedPoints: Vector4[] = [];
+                const triangle: Triangle = clippedTriangles[i];
+    
+                for (let j = 0; j < 3; j++) {
+                     const projectedPoint: Vector4 = Vector.multiplyMatrix4x4(
+                        this._projectionMat, triangle.points[j]
+                    );
+        
+                    projectedPoint.x /= projectedPoint.w;
+                    projectedPoint.y /= projectedPoint.w;
+    
+                    projectedPoint.x *= this._canvas.width / 2;
+                    projectedPoint.y *= -this._canvas.height / 2;
+    
+                    projectedPoint.x += this._canvas.width / 2;
+                    projectedPoint.y += this._canvas.height / 2;
+    
+                    projectedPoints.push(projectedPoint);
+                }
+    
+                triangle.points = projectedPoints;
+    
+                this._triangledToRender.push(triangle);
             }
-
-            triangle.points = [
-                new Vector4(projectedPoints[0].x, projectedPoints[0].y, projectedPoints[0].z, projectedPoints[0].w),
-                new Vector4(projectedPoints[1].x, projectedPoints[1].y, projectedPoints[1].z, projectedPoints[1].w),
-                new Vector4(projectedPoints[2].x, projectedPoints[2].y, projectedPoints[2].z, projectedPoints[2].w),
-            ];
-
-            triangle.texCoords = [
-                { u: face.uvA.u, v: face.uvA.v },
-                { u: face.uvB.u, v: face.uvB.v },
-                { u: face.uvC.u, v: face.uvC.v }
-            ];
-
-            this._triangledToRender.push(triangle);
         }
         
     }

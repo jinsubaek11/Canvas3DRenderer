@@ -1,28 +1,34 @@
-import Renderer from "./renderer";
+import Renderer from "./graphics/renderer";
+import { Controller } from './ui/controller'
 import {Vector2, Vector3} from "./math/vector";
 
 import "./style.css"
 
-
-function main() {
+async function main() {
     
-    const renderer: Renderer = new Renderer();
+    const controller: Controller = Controller.getInstance();
+    controller.bindEvents();
+
+    const renderer: Renderer = Renderer.getInstance();
     
+    let previous = 0;
 
-    const roopAnimation = () => {
-
+    const roopAnimation = (current: number) => {
+        const deltaTime = (current - previous) * 0.001;
+        previous = current;
+        //console.log(deltaTime);
       // poll events
 
       // update
-        renderer.update();
+        renderer.update(controller.renderingStates, deltaTime);
 
       // render
-        renderer.render();
+        renderer.render(controller.renderingStates, deltaTime);
 
         requestAnimationFrame(roopAnimation);
     }
 
-    if (renderer.init())
+    if (await renderer.setup())
     {
         requestAnimationFrame(roopAnimation);
     }
