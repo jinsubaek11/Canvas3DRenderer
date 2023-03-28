@@ -1,6 +1,3 @@
-import { before } from "node:test";
-
-
 interface Elements {
     [key: string]: HTMLElement | null;
 }
@@ -27,6 +24,10 @@ export interface MovementStates {
     down: boolean;
 }
 
+enum MouseButton {
+    RIGHT = 2
+}
+
 export interface MouseStates {
     dx: number;
     dy: number;
@@ -42,11 +43,16 @@ export class Controller {
     private static _instance: Controller;
     private _elements: Elements = {};
     private _renderingStates: RenderingStates = {};
-    private _movementStates: MovementStates = {};
-    private _mouseStates: MouseStates = {};
-    private _isFirstMove = true;
-    private _beforeX = 0;
-    private _beforeY = 0;
+    private _mouseStates: MouseStates = { dx: 0, dy: 0 };
+    private _isLeftClick: boolean = false;
+    private _isFirstMove: boolean = true;
+    private _beforeX: number = 0;
+    private _beforeY: number = 0;
+    private _movementStates: MovementStates = {
+        forward: false, backward: false,
+        left: false, right: false,
+        up: false, down: false
+    };
 
     private constructor() {
         this._elements[WIRE_FRAME_LINES] = document.getElementById(WIRE_FRAME_LINES);
@@ -60,16 +66,6 @@ export class Controller {
         this._renderingStates[TEXTURED] = false;
         this._renderingStates[POINTS] = false;
         this._renderingStates[BACKFACE_CULLING] = true;
-
-        this._movementStates.forward = false;
-        this._movementStates.backward = false;
-        this._movementStates.right = false;
-        this._movementStates.left = false;
-        this._movementStates.up = false;
-        this._movementStates.down = false;
-
-        this._mouseStates.dx = 0;
-        this._mouseStates.dy = 0;
     }
 
     public bindEvents(): void {
@@ -129,24 +125,41 @@ export class Controller {
             }
         })
 
-        // window.addEventListener('mousemove', (event: MouseEvent) => {
-        //     if (this._isFirstMove) {
-        //         this._beforeX = event.clientX;
-        //         this._beforeY = event.clientY;
-        //         this._isFirstMove = false;
-        //         return;
-        //     }
-        //     const deltaX: number = event.clientX - this._beforeX;
-        //     const deltaY: number = this._beforeY - event.clientY;
+        window.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        })
 
-        //     this._beforeX = event.clientX;
-        //     this._beforeY = event.clientY;
+        window.addEventListener('mousedown', (e) => {
+            if (e.buttons !== MouseButton.RIGHT) return;
+            this._isLeftClick = true;
+        })
 
-        //     this.mouseStates.dx = deltaX;
-        //     this.mouseStates.dy = deltaY;
+        window.addEventListener('mouseup', (e) => {
+            this._isLeftClick = false;
+            this._isFirstMove = true;
+        })
 
-        //     //console.log(this._mouseStates.yaw, this._mouseStates.pitch);
-        // })
+        window.addEventListener('mousemove', (event: MouseEvent) => {
+            if (!this._isLeftClick) return;
+
+            if (this._isFirstMove) {
+                this._beforeX = event.clientX;
+                this._beforeY = event.clientY;
+                this._isFirstMove = false;
+                return;
+            }
+
+            const deltaX: number = event.clientX - this._beforeX;
+            const deltaY: number = this._beforeY - event.clientY;
+
+            this._beforeX = event.clientX;
+            this._beforeY = event.clientY;
+
+            this.mouseStates.dx = deltaX;
+            this.mouseStates.dy = deltaY;
+
+            //console.log(this._mouseStates.yaw, this._mouseStates.pitch);
+        })
     }
 
     public static getInstance(): Controller {
