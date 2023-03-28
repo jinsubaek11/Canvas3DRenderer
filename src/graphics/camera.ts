@@ -1,20 +1,35 @@
-import { Matrix4x4 } from "../math/matrix";
+import { Matrix4x4, Matrix } from "../math/matrix";
 import { degreeToRadian } from "../math/util";
 import { Vector, Vector3 } from "../math/vector";
 import { MouseStates, MovementStates } from "../ui/controller";
+import { Frustum } from "./frustum";
 
 export default class Camera {
+    private static _lists: Camera[] = [];
     private _position: Vector3;
     private _direction: Vector3 = new Vector3(0, 0, 1);
     private _yaw: number = 90;
     private _pitch: number = 0;
-    private _speed: number = 0.5;
+    private _speed: number = 0.005;
     private _forward: Vector3 = new Vector3();
     private _right: Vector3 = new Vector3();
     private _up: Vector3 = new Vector3();
+    private _projection: Matrix4x4;
+    private _frustum: Frustum;
 
-    public constructor(position: Vector3) {
+    private constructor(position: Vector3, fovX: number, fovY: number, aspectY: number, near: number, far: number) {
         this._position = position;
+        this._projection = Matrix.projection(fovY, aspectY, near, far);
+        this._frustum = new Frustum(fovX, fovY, near, far);
+    }
+
+    public static addCamera(position: Vector3, fovX: number, fovY: number, aspectY: number, near: number, far: number): void {
+        const camera: Camera = new Camera(position, fovX, fovY, aspectY, near, far);
+        this._lists.push(camera);
+    }
+
+    public static getCameras(): Camera[] {
+        return this._lists;
     }
 
     public get position(): Vector3 {
@@ -23,6 +38,14 @@ export default class Camera {
 
     public get direction(): Vector3 {
         return this._direction;
+    }
+
+    public get projection(): Matrix4x4 {
+        return this._projection;
+    }
+
+    public get frustum(): Frustum {
+        return this._frustum;
     }
 
     public set position(vec: Vector3) {
@@ -34,7 +57,7 @@ export default class Camera {
     }
 
     public update(movement: MovementStates, mouse: MouseStates, deltaTime: number) {
-        //console.log(this._speed * deltaTime);
+        //console.log(movement);
         if (movement.forward) {
             this._position = Vector.addVec3(this._position, Vector.multiplyScalar(this._forward,  -this._speed * deltaTime));
         }
@@ -54,8 +77,8 @@ export default class Camera {
             this._position = Vector.addVec3(this._position, Vector.multiplyScalar(this._up,  -this._speed * deltaTime));
         }
 
-        this._yaw += mouse.dx * 0.1;
-        this._pitch += mouse.dy * 0.1;
+        this._yaw += mouse.dx * 0.3;
+        this._pitch += mouse.dy * 0.3;
 
         if (this._pitch < -89)
         {
