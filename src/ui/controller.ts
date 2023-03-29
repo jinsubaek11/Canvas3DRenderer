@@ -134,7 +134,7 @@ export class Controller {
             this._isLeftClick = true;
         })
 
-        window.addEventListener('mouseup', (e) => {
+        window.addEventListener('mouseup', () => {
             this._isLeftClick = false;
             this._isFirstMove = true;
         })

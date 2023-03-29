@@ -1,5 +1,5 @@
 import { Vector4 } from "../math/vector";
-import { TexCoords, Texture } from "./texture";
+import { TexCoords } from "./texture";
 
 export interface Face {
     a: number;

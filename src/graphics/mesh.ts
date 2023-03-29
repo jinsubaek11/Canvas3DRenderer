@@ -1,12 +1,12 @@
 import { Vector3 } from "../math/vector"
 import { Face } from "./triangle";
 import ObjFileParser from "obj-file-parser"
-import { TexCoords } from "./texture";
+//import { TexCoords } from "./texture";
 
 export class Mesh {
     private _faces: Face[] = [];
     private _vertices: Vector3[] = [];
-    private _texCoords: TexCoords[] = [];
+    //private _texCoords: TexCoords[] = [];
     private _filePath: string;
 
     public constructor(filePath: string) {

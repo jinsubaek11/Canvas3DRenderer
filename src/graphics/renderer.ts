@@ -55,7 +55,7 @@ export default class Renderer {
     }
   
     public update(renderingStates: RenderingStates, deltaTime: number): void {
-        this._elapsedTime += deltaTime;
+        this._elapsedTime = this._elapsedTime + deltaTime;
         //this._objects[0].rotation = new Vector3(0, this._elapsedTime * 0.1, 0);
         //this._objects[1].rotation = new Vector3(0, -this._elapsedTime * 0.2, 0);
 

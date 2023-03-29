@@ -1,5 +1,5 @@
 import { barycentricWeights } from "../math/util";
-import { Vector, Vector2, Vector3, Vector4 } from "../math/vector";
+import { Vector2, Vector3, Vector4 } from "../math/vector";
 import { Texture } from "./texture";
 
 
