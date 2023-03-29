@@ -2,16 +2,16 @@ import { lerp } from "../math/util";
 import { Vector, Vector3, Vector4 } from "../math/vector";
 import { Frustum, FrustumPlane } from "./frustum";
 import Plane from "./plane";
-import { Texture } from "./texture";
+import { TexCoords } from "./texture";
 import { Triangle } from "./triangle";
 
 
 export default class Polygon {
     private _vertices: Vector3[];
-    private _texCoords: Texture[];
+    private _texCoords: TexCoords[];
 
     public constructor(
-        a: Vector3, b:Vector3, c:Vector3, uvA: Texture, uvB: Texture, uvC: Texture, 
+        a: Vector3, b:Vector3, c:Vector3, uvA: TexCoords, uvB: TexCoords, uvC: TexCoords, 
     ) {
         this._vertices = [a, b, c];
         this._texCoords = [uvA, uvB, uvC];
@@ -21,7 +21,7 @@ export default class Polygon {
         return this._vertices;
     }
 
-    get texCoords(): Texture[] {
+    get texCoords(): TexCoords[] {
         return this._texCoords;
     }
 
@@ -35,7 +35,7 @@ export default class Polygon {
                 Vector.convertVec3ToVec4(this._vertices[i+2])
             ];
 
-            const texCoords: Texture[] = [
+            const texCoords: TexCoords[] = [
                 this._texCoords[0], this._texCoords[i+1], this._texCoords[i+2]
             ];
 
@@ -56,10 +56,10 @@ export default class Polygon {
 
     private clipPolygonByPlane(plane: Plane): void {
         const insideVertices: Vector3[] = [];
-        const insideTexCoords: Texture[] = [];
+        const insideTexCoords: TexCoords[] = [];
         let index: number = 0;
         let previousVertex: Vector3 = this._vertices[this._vertices.length - 1];
-        let previousTexCoord: Texture = this._texCoords[this._texCoords.length - 1];
+        let previousTexCoord: TexCoords = this._texCoords[this._texCoords.length - 1];
 
         if (!previousVertex || !previousTexCoord) return;
         
@@ -79,7 +79,7 @@ export default class Polygon {
                     lerp(previousVertex.z, currentVertex.z, t),
                 );
 
-                const interpolatedTexCoord: Texture = {
+                const interpolatedTexCoord: TexCoords = {
                     u: lerp(previousTexCoord.u, currentTexCoord.u, t),
                     v: lerp(previousTexCoord.v, currentTexCoord.v, t),
                 };

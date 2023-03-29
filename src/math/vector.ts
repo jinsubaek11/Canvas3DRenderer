@@ -1,4 +1,4 @@
-import { Matrix, Matrix4x4 } from "./matrix"
+import { Matrix4x4 } from "./matrix"
 
 export class Vector {
     public static convertVec3ToVec4(v: Vector3): Vector4 {

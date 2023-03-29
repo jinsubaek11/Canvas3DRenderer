@@ -1,6 +1,5 @@
 import Renderer from "./graphics/renderer";
 import { Controller } from './ui/controller'
-import {Vector2, Vector3} from "./math/vector";
 
 import "./style.css"
 
@@ -23,12 +22,13 @@ async function main() {
         renderer.update(controller.renderingStates, deltaTime);
 
       // render
-        renderer.render(controller.renderingStates, deltaTime);
+        renderer.render(controller.renderingStates);
 
         requestAnimationFrame(roopAnimation);
     }
 
-    if (await renderer.setup())
+    const startLoop: boolean = await renderer.setup();
+    if (startLoop)
     {
         requestAnimationFrame(roopAnimation);
     }
