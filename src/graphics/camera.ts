@@ -10,7 +10,7 @@ export default class Camera {
     private _direction: Vector3 = new Vector3(0, 0, 1);
     private _yaw: number = 90;
     private _pitch: number = 0;
-    private _speed: number = 0.005;
+    private _speed: number = 2;
     private _forward: Vector3 = new Vector3();
     private _right: Vector3 = new Vector3();
     private _up: Vector3 = new Vector3();
@@ -57,26 +57,6 @@ export default class Camera {
     }
 
     public update(movement: MovementStates, mouse: MouseStates, deltaTime: number) {
-        //console.log(movement);
-        if (movement.forward) {
-            this._position = Vector.addVec3(this._position, Vector.multiplyScalar(this._forward,  -this._speed * deltaTime));
-        }
-        if (movement.backward) {
-            this._position = Vector.addVec3(this._position, Vector.multiplyScalar(this._forward,  this._speed * deltaTime));
-        }
-        if (movement.right) {
-            this._position = Vector.addVec3(this._position, Vector.multiplyScalar(this._right,  this._speed * deltaTime));
-        }
-        if (movement.left) {
-            this._position = Vector.addVec3(this._position, Vector.multiplyScalar(this._right,  -this._speed * deltaTime));
-        }
-        if (movement.up) {
-            this._position = Vector.addVec3(this._position, Vector.multiplyScalar(this._up,  this._speed * deltaTime));
-        }
-        if (movement.down) {
-            this._position = Vector.addVec3(this._position, Vector.multiplyScalar(this._up,  -this._speed * deltaTime));
-        }
-
         this._yaw += mouse.dx * 0.3;
         this._pitch += mouse.dy * 0.3;
 
@@ -97,6 +77,25 @@ export default class Camera {
         this._direction.z = Math.sin(yawRadian) * Math.cos(pitchRadian);
 
         this._direction = Vector.normalizeVec3(this.direction);
+
+        if (movement.forward) {
+            this._position = Vector.addVec3(this._position, Vector.multiplyScalar(this._forward,  -this._speed * deltaTime));
+        }
+        if (movement.backward) {
+            this._position = Vector.addVec3(this._position, Vector.multiplyScalar(this._forward,  this._speed * deltaTime));
+        }
+        if (movement.right) {
+            this._position = Vector.addVec3(this._position, Vector.multiplyScalar(this._right,  this._speed * deltaTime));
+        }
+        if (movement.left) {
+            this._position = Vector.addVec3(this._position, Vector.multiplyScalar(this._right,  -this._speed * deltaTime));
+        }
+        if (movement.up) {
+            this._position = Vector.addVec3(this._position, Vector.multiplyScalar(this._up,  this._speed * deltaTime));
+        }
+        if (movement.down) {
+            this._position = Vector.addVec3(this._position, Vector.multiplyScalar(this._up,  -this._speed * deltaTime));
+        }
     }
 
     public getViewMatrix(): Matrix4x4 {
@@ -111,7 +110,7 @@ export default class Camera {
         const x: Vector3 = Vector.normalizeVec3(Vector.crossVec3(up, z));
         const y: Vector3 = Vector.crossVec3(z, x);
 
-        this._forward = target;
+        this._forward = Vector.multiplyScalar(z, -1);
         this._right = x;
         this._up = y;
 

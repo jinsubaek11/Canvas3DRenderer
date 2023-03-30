@@ -36,7 +36,7 @@ export default class Object {
         console.log(this._texture);
     }
 
-    public update(renderingStates: RenderingStates, deltaTime: number): void {
+    public update(renderingStates: RenderingStates): void {
         this._triangles = [];
         const camera = Camera.getCameras()[0];
 
@@ -48,11 +48,6 @@ export default class Object {
             vertices[1] = this._mesh.vertices[face.b];
             vertices[2] = this._mesh.vertices[face.c];
             
-            const controller: Controller = Controller.getInstance();
-            camera.update(controller.movementStates, controller.mouseStates, deltaTime);
-            controller.mouseStates.dx = 0;
-            controller.mouseStates.dy = 0;    
-
             const transformedVertices: Vector3[] = [];
 
             for (let i = 0; i < 3; i++) {
