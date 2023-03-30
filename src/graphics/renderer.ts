@@ -5,7 +5,6 @@ import { Controller, RenderingStates } from "../ui/controller"
 import Camera from "./camera";
 import Object from "./object";
 import { Light, Lights } from "./lights";
-import camera from "./camera";
 
 
 export default class Renderer {

@@ -5,7 +5,7 @@ import { Mesh } from "./mesh";
 import { Texture } from "./texture";
 import Polygon from "./polygon";
 import Camera from "./camera";
-import { BACKFACE_CULLING, Controller, FILLED_TRIANGLES, POINTS, RenderingStates, TEXTURED, WIRE_FRAME_LINES } from "../ui/controller";
+import { BACKFACE_CULLING, FILLED_TRIANGLES, POINTS, RenderingStates, TEXTURED, WIRE_FRAME_LINES } from "../ui/controller";
 import { Face, Triangle } from "./triangle";
 import { Lights } from "./lights";
 
