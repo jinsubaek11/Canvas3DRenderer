@@ -1,10 +1,11 @@
 import Canvas from "./canvas"
 import { Vector3 } from "../math/vector"
 import { degreeToRadian, radianToDegree } from "../math/util"; 
-import { RenderingStates } from "../ui/controller"
+import { Controller, RenderingStates } from "../ui/controller"
 import Camera from "./camera";
 import Object from "./object";
 import { Light, Lights } from "./lights";
+import camera from "./camera";
 
 
 export default class Renderer {
@@ -28,13 +29,15 @@ export default class Renderer {
         if (Canvas.init()) {
             if (Canvas.canvasViewCtx && Canvas.canvasColorBufferCtx)
             {
-                const shark = new Object("./assets/shark.obj", "./assets/shark.png", new Vector3(0, 0, 0), new Vector3(0, 3.14 / 2, 0));
-                const cow = new Object("./assets/cow.obj", "", new Vector3(0, 1, 0), new Vector3(0, 0, 0), new Vector3(0.003, 0.003, 0.003));
-                //const shark2 = new Object("./assets/shark.obj", "./assets/shark.png", new Vector3(0, 2, 0), new Vector3(0, 3.14 / 2, 0))
+                const shark = new Object("./assets/shark.obj", "./assets/shark.png", new Vector3(0, 0, 0), new Vector3(0, Math.PI * 0.5, 0));
+                const cow = new Object("./assets/cow.obj", "", new Vector3(-0.5, 1.5, 0), new Vector3(0, 0, 0), new Vector3(0.002, 0.002, 0.002));
+                const cat = new Object("./assets/cat.obj", "", new Vector3(2, -2.5, 0), new Vector3(0, Math.PI * 0.5, 0), new Vector3(0.05, 0.05, 0.05))
+                const chicken = new Object("./assets/chicken.obj", "", new Vector3(-3, -2.5, 0), new Vector3(0, Math.PI * 0.5, 0), new Vector3(0.03, 0.03, 0.03))
 
                 this._objects.push(shark);
                 this._objects.push(cow);
-                //this._objects.push(shark2);
+                this._objects.push(cat);
+                this._objects.push(chicken);
                 
                 const aspectX: number = Canvas.canvasView.width / Canvas.canvasView.height;
                 const aspectY: number = Canvas.canvasView.height / Canvas.canvasView.width;
@@ -56,10 +59,18 @@ export default class Renderer {
   
     public update(renderingStates: RenderingStates, deltaTime: number): void {
         this._elapsedTime = this._elapsedTime + deltaTime;
-        //this._objects[0].rotation = new Vector3(0, this._elapsedTime * 0.1, 0);
-        //this._objects[1].rotation = new Vector3(0, -this._elapsedTime * 0.2, 0);
+        
+        this._objects[0].rotation = new Vector3(0, this._elapsedTime * 0.2, 0);
+        this._objects[1].rotation = new Vector3(0, -this._elapsedTime * 0.2, 0);
+        this._objects[2].rotation = new Vector3(0, this._elapsedTime * 0.2, 0);
+        this._objects[3].rotation = new Vector3(0, -this._elapsedTime * 0.2, 0);
 
-        this._objects.forEach((object: Object) => object.update(renderingStates, deltaTime));
+        const controller: Controller = Controller.getInstance();
+        Camera.getCameras()[0].update(controller.movementStates, controller.mouseStates, deltaTime);
+        controller.mouseStates.dx = 0;
+        controller.mouseStates.dy = 0;    
+
+        this._objects.forEach((object: Object) => object.update(renderingStates));
     }
 
     public render(renderingStates: RenderingStates): void {

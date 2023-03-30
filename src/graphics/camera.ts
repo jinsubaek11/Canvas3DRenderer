@@ -57,8 +57,8 @@ export default class Camera {
     }
 
     public update(movement: MovementStates, mouse: MouseStates, deltaTime: number) {
-        this._yaw += mouse.dx * 0.3;
-        this._pitch += mouse.dy * 0.3;
+        this._yaw += mouse.dx * 0.1;
+        this._pitch += mouse.dy * 0.1;
 
         if (this._pitch < -89)
         {

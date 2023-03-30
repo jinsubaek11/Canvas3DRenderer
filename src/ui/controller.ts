@@ -1,9 +1,9 @@
 interface Elements {
-    [key: string]: HTMLElement | null;
+    [key: string]: HTMLInputElement | null;
 }
 
 export interface RenderingStates {
-    [key: string]: boolean;
+    [key: string]: boolean | undefined;
 }
 
 enum Movement {
@@ -38,6 +38,7 @@ export const FILLED_TRIANGLES: string = "filledTriangles";
 export const POINTS: string = "points";
 export const BACKFACE_CULLING: string = "backfaceCulling";
 export const TEXTURED: string = "textured";
+export const CAMERA_MOVING: string = "cameraMoving";
 
 export class Controller {
     private static _instance: Controller;
@@ -55,27 +56,78 @@ export class Controller {
     };
 
     private constructor() {
-        this._elements[WIRE_FRAME_LINES] = document.getElementById(WIRE_FRAME_LINES);
-        this._elements[FILLED_TRIANGLES] = document.getElementById(FILLED_TRIANGLES);
-        this._elements[TEXTURED] = document.getElementById(TEXTURED);
-        this._elements[POINTS] = document.getElementById(POINTS);
-        this._elements[BACKFACE_CULLING] = document.getElementById(BACKFACE_CULLING);
+        this._elements[WIRE_FRAME_LINES] = document.getElementById(WIRE_FRAME_LINES) as HTMLInputElement;
+        this._elements[FILLED_TRIANGLES] = document.getElementById(FILLED_TRIANGLES) as HTMLInputElement;
+        this._elements[TEXTURED] = document.getElementById(TEXTURED) as HTMLInputElement;
+        this._elements[POINTS] = document.getElementById(POINTS) as HTMLInputElement;
+        this._elements[BACKFACE_CULLING] = document.getElementById(BACKFACE_CULLING) as HTMLInputElement;
+        this._elements[CAMERA_MOVING] = document.getElementById(CAMERA_MOVING) as HTMLInputElement;
 
-        this._renderingStates[WIRE_FRAME_LINES] = true;
-        this._renderingStates[FILLED_TRIANGLES] = false;
-        this._renderingStates[TEXTURED] = false;
-        this._renderingStates[POINTS] = false;
-        this._renderingStates[BACKFACE_CULLING] = true;
+        for (const key in this._elements) {
+            this._renderingStates[key] = this._elements[key]?.checked;
+        }
     }
 
     public bindEvents(): void {
         for (const key in this._elements) {
             this._elements[key]?.addEventListener("change", () => {
                 this._renderingStates[key] = !this._renderingStates[key];
+
+                if (this._renderingStates[TEXTURED] && key === TEXTURED) {
+                    if (this._elements[FILLED_TRIANGLES]) {
+                        this._elements[FILLED_TRIANGLES].checked = false;
+                        this._renderingStates[FILLED_TRIANGLES] = false;
+                    }
+
+                    if (this._elements[WIRE_FRAME_LINES]) {
+                        this._elements[WIRE_FRAME_LINES].checked = true;
+                        this._renderingStates[WIRE_FRAME_LINES] = true;
+                    }
+                }
+
+                if (this._renderingStates[FILLED_TRIANGLES] && key === FILLED_TRIANGLES) {
+                    if (this._elements[TEXTURED]) {
+                        this._elements[TEXTURED].checked = false;
+                        this._renderingStates[TEXTURED] = false;
+                    }
+                    
+                    if (this._elements[WIRE_FRAME_LINES]) {
+                        this._elements[WIRE_FRAME_LINES].checked = true;
+                        this._renderingStates[WIRE_FRAME_LINES] = true;
+                    }
+                }
+
+                if (this._renderingStates[CAMERA_MOVING]) {
+                    if (this._elements[FILLED_TRIANGLES]) {
+                        this._elements[FILLED_TRIANGLES].hidden = true;
+                        this._elements[FILLED_TRIANGLES].checked = false;
+                        this._renderingStates[FILLED_TRIANGLES] = false;
+                    }
+
+                    if (this._elements[TEXTURED]) {
+                        this._elements[TEXTURED].hidden = true;
+                        this._elements[TEXTURED].checked = false;
+                        this._renderingStates[TEXTURED] = false;
+                    }
+
+                    if (this._elements[WIRE_FRAME_LINES]) {
+                        this._elements[WIRE_FRAME_LINES].checked = true;
+                        this._renderingStates[WIRE_FRAME_LINES] = true;
+                    }
+                }
+                else
+                {
+                    if (this._elements[FILLED_TRIANGLES] && this._elements[TEXTURED]) {
+                       this._elements[FILLED_TRIANGLES].hidden = false;
+                       this._elements[TEXTURED].hidden = false;
+                    }
+                }
             })
         }
 
         window.addEventListener("keypress", (event:KeyboardEvent) => {
+            if (!this._renderingStates[CAMERA_MOVING]) return;
+
             switch (event.key) {
                 case Movement.LEFT:
                     this._movementStates.left = true;
@@ -100,7 +152,9 @@ export class Controller {
             }
         })
 
-        window.addEventListener("keyup", (event:KeyboardEvent) => {
+        window.addEventListener("keyup", (event:KeyboardEvent) => {            
+            if (!this._renderingStates[CAMERA_MOVING]) return;
+
             switch (event.key) {
                 case Movement.LEFT:
                     this._movementStates.left = false;
@@ -140,7 +194,7 @@ export class Controller {
         })
 
         window.addEventListener('mousemove', (event: MouseEvent) => {
-            if (!this._isLeftClick) return;
+            if (!this._isLeftClick || !this._renderingStates[CAMERA_MOVING]) return;
 
             if (this._isFirstMove) {
                 this._beforeX = event.clientX;
