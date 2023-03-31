@@ -15,13 +15,9 @@ async function main() {
     const roopAnimation = (current: number) => {
         const deltaTime = (current - previous) * 0.001;
         previous = current;
-        //console.log(deltaTime);
-      // poll events
 
-      // update
         renderer.update(controller.renderingStates, deltaTime);
 
-      // render
         renderer.render(controller.renderingStates);
 
         requestAnimationFrame(roopAnimation);

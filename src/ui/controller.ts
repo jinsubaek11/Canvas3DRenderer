@@ -211,8 +211,6 @@ export class Controller {
 
             this.mouseStates.dx = deltaX;
             this.mouseStates.dy = deltaY;
-
-            //console.log(this._mouseStates.yaw, this._mouseStates.pitch);
         })
     }
 

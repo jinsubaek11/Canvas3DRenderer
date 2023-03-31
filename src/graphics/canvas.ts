@@ -159,7 +159,6 @@ export default class Canvas {
 
                 for (let x = xStart; x < xEnd; x++) {
                     Canvas.drawTexel(x, y, texture, pointA, pointB, pointC, high.u, high.v, middle.u, middle.v, low.u, low.v);
-                    //this.drawPixel(x, y, "yellow");
                 }
             }
         }

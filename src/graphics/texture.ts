@@ -57,32 +57,3 @@ export class Texture {
     }
 }
 
-// export interface Texture {
-//     u: number;
-//     v: number;
-// }
-
-
-
-// export const loadImageData = async (filePath: string) => {
-//     const res = await fetch(filePath);
-//     const arrayBuffer = await res.arrayBuffer();
-//     const decodedPng = decode(arrayBuffer);
-//     const ret: { width: number, height: number, data: RGBA[] } = { width: 0, height: 0, data: [] };
-
-//     ret.width = decodedPng.width;
-//     ret.height = decodedPng.height;
-
-//     for (let i = 0; i < decodedPng.data.length; i += 4) {
-//         ret.data.push(
-//             { 
-//                 r: decodedPng.data[i + 0], 
-//                 g: decodedPng.data[i + 1], 
-//                 b: decodedPng.data[i + 2], 
-//                 a: decodedPng.data[i + 3]
-//             }
-//         );
-//     }
-
-//     return ret;
-// };
