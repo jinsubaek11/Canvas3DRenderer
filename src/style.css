@@ -48,3 +48,7 @@ canvas {
 .control-item:nth-child(7) {
   margin-top: 20px;
 }
+
+.control-item:nth-child(8) {
+  font-size: 14px;
+}
