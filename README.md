@@ -1,4 +1,6 @@
 # Canvas3DRenderer
+
+<img width="800" alt="image" src="https://user-images.githubusercontent.com/83934022/232976438-81d2e25d-46f3-4168-9e25-cb6136fbb093.png">\
 [바로가기](https://jinsubaek11.github.io/Canvas3DRenderer/)
 
 ### 개발 동기
